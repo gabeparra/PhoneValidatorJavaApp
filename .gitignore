@@ -1,0 +1,12 @@
+*.sql
+*.jar
+*.csv
+*.json
+*.txt
+*.log
+*.out
+*.err
+*.log.*
+*.log.*.*
+*.log.*.*.*
+*.log.*.*.*.*
