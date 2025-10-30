@@ -10,16 +10,6 @@ import java.util.regex.*;
  */
 public class SQLParser {
     
-    // Pattern to extract values from INSERT statement
-    // The SQL format has these columns in order:
-    // id, created_time, ad_id, ad_name, adset_id, adset_name, campaign_id, campaign_name, 
-    // form_id, form_name, is_organic, platform, email, name, last, date_of_birth, 
-    // phone_number, city, inbox_url, toslate, career_interest, country, exported
-    private static final Pattern INSERT_PATTERN = Pattern.compile(
-        "INSERT\\s+INTO\\s+[^(]+\\([^)]+\\)\\s+VALUES\\s*\\((.+)\\)",
-        Pattern.CASE_INSENSITIVE | Pattern.DOTALL
-    );
-    
     public PhoneNumberData parse(String filePath) throws IOException {
         System.out.println("📄 Reading SQL file: " + filePath);
         
@@ -27,28 +17,39 @@ public class SQLParser {
         List<String> lines = Files.readAllLines(Paths.get(filePath));
         
         int rowNumber = 0;
+        String previousLine = "";
+        
         for (String line : lines) {
-            if (!line.trim().startsWith("INSERT") || line.length() < 100) {
-                continue;
+            line = line.trim();
+            
+            // Check if this line has VALUES (data line)
+            if (line.startsWith("(") && line.endsWith(");")) {
+                // This is a VALUES line, use the previous INSERT line
+                if (previousLine.contains("INSERT INTO")) {
+                    try {
+                        rowNumber++;
+                        PhoneRecord record = parseInsertStatement(rowNumber, previousLine + " " + line);
+                        if (record != null) {
+                            records.add(record);
+                        }
+                    } catch (Exception e) {
+                        System.err.println("⚠️  Warning: Failed to parse line " + rowNumber + ": " + e.getMessage());
+                    }
+                }
             }
             
-            try {
-                rowNumber++;
-                PhoneRecord record = parseInsertStatement(rowNumber, line);
-                if (record != null) {
-                    records.add(record);
-                }
-            } catch (Exception e) {
-                System.err.println("⚠️  Warning: Failed to parse line " + rowNumber + ": " + e.getMessage());
-            }
+            previousLine = line;
         }
         
         System.out.println("✅ Parsed " + records.size() + " phone records from SQL file");
         return new PhoneNumberData(records);
     }
     
-    private PhoneRecord parseInsertStatement(int rowNumber, String line) {
-        Matcher matcher = INSERT_PATTERN.matcher(line);
+    private PhoneRecord parseInsertStatement(int rowNumber, String fullStatement) {
+        // Extract the VALUES part
+        Pattern valuesPattern = Pattern.compile("VALUES\\s*\\((.+)\\);?$", Pattern.CASE_INSENSITIVE);
+        Matcher matcher = valuesPattern.matcher(fullStatement);
+        
         if (!matcher.find()) {
             return null;
         }
@@ -62,13 +63,13 @@ public class SQLParser {
         }
         
         // Extract the relevant fields by position
-        String id = values.get(0);           // Column 0: id
-        String email = values.get(12);       // Column 12: email
-        String name = values.get(13);        // Column 13: name
-        String phoneNumber = values.get(16); // Column 16: phone_number
-        String country = values.get(21);     // Column 21: country
+        String id = cleanValue(values.get(0));           // Column 0: id
+        String email = cleanValue(values.get(12));       // Column 12: email
+        String name = cleanValue(values.get(13));        // Column 13: name
+        String phoneNumber = cleanValue(values.get(16)); // Column 16: phone_number
+        String country = cleanValue(values.get(21));     // Column 21: country
         
-        return new PhoneRecord(rowNumber, id, email, name, phoneNumber, country, line);
+        return new PhoneRecord(rowNumber, id, email, name, phoneNumber, country, fullStatement);
     }
     
     /**
@@ -127,5 +128,21 @@ public class SQLParser {
         
         return values;
     }
+    
+    /**
+     * Clean up extracted values - remove quotes, handle NULL
+     */
+    private String cleanValue(String value) {
+        if (value == null || value.equalsIgnoreCase("NULL")) {
+            return null;
+        }
+        
+        // Remove surrounding quotes
+        value = value.trim();
+        if (value.startsWith("'") && value.endsWith("'")) {
+            value = value.substring(1, value.length() - 1);
+        }
+        
+        return value;
+    }
 }
-

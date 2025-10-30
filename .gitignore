@@ -10,3 +10,27 @@
 *.log.*.*
 *.log.*.*.*
 *.log.*.*.*.*
+
+# Output directory
+output/ 
+!output/.gitkeep
+
+# maven files   
+target/
+!target/.gitkeep
+
+# IDE files
+.idea/
+.vscode/
+.cursorignore
+
+# Python files
+*.pyc
+*.pyo
+*.pyd
+.Python
+
+# Java files
+*.class
+*.jar
+*.war
