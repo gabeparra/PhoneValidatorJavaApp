@@ -15,10 +15,10 @@ public class ValidPhoneRecord {
     private final String countryCode;
     private final String region;
     private final String type;
-    
+    private final String platform;
     public ValidPhoneRecord(int rowNumber, String id, String email, String name,
                            String originalPhoneNumber, String e164, String international,
-                           String national, String countryCode, String region, String type) {
+                           String national, String countryCode, String region, String type, String platform) {
         this.rowNumber = rowNumber;
         this.id = id;
         this.email = email;
@@ -30,6 +30,7 @@ public class ValidPhoneRecord {
         this.countryCode = countryCode;
         this.region = region;
         this.type = type;
+        this.platform = platform;
     }
     
     // Getters
@@ -44,5 +45,6 @@ public class ValidPhoneRecord {
     public String getCountryCode() { return countryCode; }
     public String getRegion() { return region; }
     public String getType() { return type; }
+    public String getPlatform() { return platform; }
 }
 

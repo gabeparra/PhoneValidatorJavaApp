@@ -10,15 +10,16 @@ public class InvalidPhoneRecord {
     private final String name;
     private final String originalPhoneNumber;
     private final String error;
-    
+    private final String platform;
     public InvalidPhoneRecord(int rowNumber, String id, String email, String name,
-                             String originalPhoneNumber, String error) {
+                             String originalPhoneNumber, String error, String platform) {
         this.rowNumber = rowNumber;
         this.id = id;
         this.email = email;
         this.name = name;
         this.originalPhoneNumber = originalPhoneNumber;
         this.error = error;
+        this.platform = platform;
     }
     
     // Getters
@@ -28,5 +29,6 @@ public class InvalidPhoneRecord {
     public String getName() { return name; }
     public String getOriginalPhoneNumber() { return originalPhoneNumber; }
     public String getError() { return error; }
+    public String getPlatform() { return platform; }
 }
 

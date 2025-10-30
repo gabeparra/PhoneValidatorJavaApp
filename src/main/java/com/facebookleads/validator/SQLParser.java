@@ -68,8 +68,9 @@ public class SQLParser {
         String name = cleanValue(values.get(13));        // Column 13: name
         String phoneNumber = cleanValue(values.get(16)); // Column 16: phone_number
         String country = cleanValue(values.get(21));     // Column 21: country
+        String platform = cleanValue(values.get(22));    // Column 22: platform
         
-        return new PhoneRecord(rowNumber, id, email, name, phoneNumber, country, fullStatement);
+        return new PhoneRecord(rowNumber, id, email, name, phoneNumber, country, platform, fullStatement);
     }
     
     /**

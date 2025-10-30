@@ -10,16 +10,18 @@ public class PhoneRecord {
     private final String name;
     private final String phoneNumber;
     private final String country;
+    private final String platform;
     private final String originalLine;
     
     public PhoneRecord(int rowNumber, String id, String email, String name, 
-                      String phoneNumber, String country, String originalLine) {
+                      String phoneNumber, String country, String platform, String originalLine) {
         this.rowNumber = rowNumber;
         this.id = id;
         this.email = email;
         this.name = name;
         this.phoneNumber = phoneNumber;
         this.country = country;
+        this.platform = platform;
         this.originalLine = originalLine;
     }
     
@@ -29,6 +31,7 @@ public class PhoneRecord {
     public String getEmail() { return email; }
     public String getName() { return name; }
     public String getPhoneNumber() { return phoneNumber; }
+    public String getPlatform() { return platform; }
     public String getCountry() { return country; }
     public String getOriginalLine() { return originalLine; }
 }
