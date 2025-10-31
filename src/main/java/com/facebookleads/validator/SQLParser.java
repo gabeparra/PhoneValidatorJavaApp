@@ -8,7 +8,7 @@ import java.util.regex.*;
 /**
  * Parses phone numbers from Facebook leads SQL export file
  */
-public class SQLParser {
+public class SQLParser implements DataParser {
     
     public PhoneNumberData parse(String filePath) throws IOException {
         System.out.println("📄 Reading SQL file: " + filePath);
