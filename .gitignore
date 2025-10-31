@@ -35,11 +35,12 @@ target/classes/
 .cursorignore
 
 # Python files
+venv/
+__pycache__/
 *.pyc
 *.pyo
 *.pyd
 .Python
-
 # Java files
 *.class
 *.jar

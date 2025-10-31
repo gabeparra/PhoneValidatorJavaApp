@@ -52,7 +52,8 @@ public class PhoneNumberValidator {
                     record.getEmail(),
                     record.getName(),
                     phoneNumberStr,
-                    "Empty or NULL phone number"
+                    "Empty or NULL phone number",
+                    record.getPlatform()    
                 ));
                 continue;
             }
@@ -82,7 +83,8 @@ public class PhoneNumberValidator {
                         phoneUtil.format(phoneNumber, PhoneNumberFormat.NATIONAL),
                         countryCode,
                         regionCode != null ? regionCode : "Unknown",
-                        numberType
+                        numberType,
+                        record.getPlatform()
                     ));
                 } else {
                     // Invalid number - not valid for its region
@@ -92,7 +94,8 @@ public class PhoneNumberValidator {
                         record.getEmail(),
                         record.getName(),
                         phoneNumberStr,
-                        "Number is not valid for its region"
+                        "Number is not valid for its region",
+                        record.getPlatform()
                     ));
                 }
                 
@@ -125,7 +128,8 @@ public class PhoneNumberValidator {
                     record.getEmail(),
                     record.getName(),
                     phoneNumberStr,
-                    errorMsg
+                    errorMsg,
+                    record.getPlatform()
                 ));
             }
         }

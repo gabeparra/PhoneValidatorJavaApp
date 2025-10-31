@@ -3,7 +3,7 @@
 ## 🚀 TL;DR - Get Started in 3 Commands
 
 ```bash
-cd /home/gabriel/projects/phone-validator
+cd /projects/phone-validator
 ./setup.sh    # Install Java & Maven (first time only)
 ./build.sh    # Build the project
 ./run.sh      # Run the validator

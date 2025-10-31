@@ -79,7 +79,7 @@ public class OutputGenerator {
     private void generateCSV(ValidationResult result) throws IOException {
         // Valid numbers CSV
         try (FileWriter writer = new FileWriter(outputDir + "/valid_numbers.csv")) {
-            writer.append("Row,ID,Name,Email,Original Number,E.164,International,National,Country Code,Region,Type\n");
+            writer.append("Row,ID,Name,Email,Original Number,E.164,International,National,Country Code,Region,Type,Platform\n");
             for (ValidPhoneRecord record : result.getValidNumbers()) {
                 writer.append(String.valueOf(record.getRowNumber())).append(",")
                       .append(escapeCSV(record.getId())).append(",")
@@ -91,20 +91,22 @@ public class OutputGenerator {
                       .append(escapeCSV(record.getNational())).append(",")
                       .append(escapeCSV(record.getCountryCode())).append(",")
                       .append(escapeCSV(record.getRegion())).append(",")
-                      .append(escapeCSV(record.getType())).append("\n");
+                      .append(escapeCSV(record.getType())).append(",")
+                      .append(escapeCSV(record.getPlatform())).append("\n");
             }
         }
         
         // Invalid numbers CSV
         try (FileWriter writer = new FileWriter(outputDir + "/invalid_numbers.csv")) {
-            writer.append("Row,ID,Name,Email,Original Number,Error\n");
+            writer.append("Row,ID,Name,Email,Original Number,Error,Platform\n");
             for (InvalidPhoneRecord record : result.getInvalidNumbers()) {
                 writer.append(String.valueOf(record.getRowNumber())).append(",")
                       .append(escapeCSV(record.getId())).append(",")
                       .append(escapeCSV(record.getName())).append(",")
                       .append(escapeCSV(record.getEmail())).append(",")
                       .append(escapeCSV(record.getOriginalPhoneNumber())).append(",")
-                      .append(escapeCSV(record.getError())).append("\n");
+                      .append(escapeCSV(record.getError())).append(",")
+                      .append(escapeCSV(record.getPlatform())).append("\n");
             }
         }
     }
@@ -165,7 +167,9 @@ public class OutputGenerator {
                 writer.append(String.format("  National:      %s\n", record.getNational()));
                 writer.append(String.format("  Country:       %s (%s)\n", 
                     record.getRegion(), record.getCountryCode()));
-                writer.append(String.format("  Type:          %s\n\n", record.getType()));
+                writer.append(String.format("  Type:          %s\n", record.getType()));
+                writer.append(String.format("  Platform:      %s\n", record.getPlatform()));
+                writer.append("\n");
             }
             
             // Invalid numbers section
@@ -179,7 +183,8 @@ public class OutputGenerator {
                     writer.append(String.format("  ID:            %s\n", record.getId()));
                     writer.append(String.format("  Email:         %s\n", record.getEmail()));
                     writer.append(String.format("  Phone:         %s\n", record.getOriginalPhoneNumber()));
-                    writer.append(String.format("  Error:         %s\n\n", record.getError()));
+                    writer.append(String.format("  Error:         %s\n", record.getError()));
+                    writer.append(String.format("  Platform:      %s\n\n", record.getPlatform()));
                 }
             }
             
