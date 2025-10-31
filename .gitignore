@@ -17,7 +17,17 @@ output/
 
 # maven files   
 target/
-!target/.gitkeep
+target/*.*
+target/*.*.*
+target/*.*.*.*
+target/*.*.*.*.*
+target/*.*.*.*.*.*
+target/*.*.*.*.*.*.*
+target/*.*.*.*.*.*.*.*
+target/*.*.*.*.*.*.*.*.*
+target/*.*.*.*.*.*.*.*.*.*
+target/classes/
+
 
 # IDE files
 .idea/
