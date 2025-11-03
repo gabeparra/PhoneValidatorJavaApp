@@ -1,49 +1,58 @@
+# Data files (sensitive)
 *.sql
-*.jar
 *.csv
-*.json
-*.txt
+*.xlsx
+*.xls
+
+# Logs
 *.log
 *.out
 *.err
 *.log.*
-*.log.*.*
-*.log.*.*.*
-*.log.*.*.*.*
-*.xlsx
-*.xls
+logs/
 
 # Output directory
 output/ 
 !output/.gitkeep
 
-# maven files   
+# Maven files   
 target/
-target/*.*
-target/*.*.*
-target/*.*.*.*
-target/*.*.*.*.*
-target/*.*.*.*.*.*
-target/*.*.*.*.*.*.*
-target/*.*.*.*.*.*.*.*
-target/*.*.*.*.*.*.*.*.*
-target/*.*.*.*.*.*.*.*.*.*
-target/classes/
+*.class
+*.jar
+*.war
 
-
-# IDE files
-.idea/
-.vscode/
-.cursorignore
-
-# Python files
+# Python
 venv/
 __pycache__/
 *.pyc
 *.pyo
 *.pyd
 .Python
-# Java files
-*.class
-*.jar
-*.war
+*.egg-info/
+.pytest_cache/
+
+# Node.js / Frontend
+node_modules/
+.next/
+.npm
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+.pnpm-debug.log*
+
+# Environment variables
+.env
+.env.local
+.env.*.local
+
+# IDE files
+.idea/
+.vscode/
+.cursorignore
+*.swp
+*.swo
+*~
+
+# OS files
+.DS_Store
+Thumbs.db
