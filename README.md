@@ -350,6 +350,3 @@ This project uses Google's libphonenumber library, which is licensed under Apach
 4. Submit a pull request
 
 ---
-
-Built with ❤️ for Facebook Leads validation
-
