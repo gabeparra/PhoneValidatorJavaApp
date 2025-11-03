@@ -219,7 +219,6 @@ public class ExcelParser implements DataParser {
         return new PhoneRecord(rowNumber, id, email, name, phoneNumber, country, null, originalLine);
     }
 
-    
     /**
      * Get cell value by column index
      */
@@ -294,83 +293,4 @@ public class ExcelParser implements DataParser {
         return firstName + " " + lastName;
     }
 
-    /**
-     * Ensure phone number has + prefix for international format
-     * Adds country code if missing based on country field
-     */
-    private String ensurePlusPrefix(String phoneNumber, String country) {
-        if (phoneNumber == null || phoneNumber.isEmpty()) {
-            return phoneNumber;
-        }
-
-        // Already has + prefix - return as-is (validator will parse the country code)
-        if (phoneNumber.startsWith("+")) {
-            return phoneNumber;
-        }
-
-        // Map common countries to their codes
-        Map<String, String> countryCodes = new HashMap<>();
-        countryCodes.put("ARGENTINA", "54");
-        countryCodes.put("BANGLADESH", "880");
-        countryCodes.put("BRAZIL", "55");
-        countryCodes.put("CANADA", "1");
-        countryCodes.put("CHILE", "56");
-        countryCodes.put("CHINA", "86");
-        countryCodes.put("COLOMBIA", "57");
-        countryCodes.put("ECUADOR", "593");
-        countryCodes.put("EGYPT", "20");
-        countryCodes.put("EL SALVADOR", "503");
-        countryCodes.put("ELSALVADOR", "503");
-        countryCodes.put("HONDURAS", "504");
-        countryCodes.put("INDIA", "91");
-        countryCodes.put("ISRAEL", "972");
-        countryCodes.put("KAZAKHSTAN", "7");
-        countryCodes.put("KYRGYZSTAN", "996");
-        countryCodes.put("MEXICO", "52");
-        countryCodes.put("MOROCCO", "212");
-        countryCodes.put("NEPAL", "977");
-        countryCodes.put("NIGERIA", "234");
-        countryCodes.put("PAKISTAN", "92");
-        countryCodes.put("PERU", "51");
-        countryCodes.put("RUSSIA", "7");
-        countryCodes.put("RUSSIAN FEDERATION", "7");
-        countryCodes.put("SAUDI ARABIA", "966");
-        countryCodes.put("SPAIN", "34");
-        countryCodes.put("TURKEY", "90");
-        countryCodes.put("UNITED STATES", "1");
-        countryCodes.put("US", "1");
-        countryCodes.put("USA", "1");
-        countryCodes.put("UZBEKISTAN", "998");
-        countryCodes.put("VENEZUELA", "58");
-        countryCodes.put("VIET NAM", "84");
-        countryCodes.put("VIETNAM", "84");
-        countryCodes.put("ZAMBIA", "260");
-
-        // Try to add country code based on country field
-        if (country != null && !country.trim().isEmpty()) {
-            String countryUpper = country.toUpperCase().trim();
-            String code = countryCodes.get(countryUpper);
-
-            if (code != null) {
-                // Check if phone number already starts with this country code
-                if (phoneNumber.startsWith(code)) {
-                    // Number already has country code, just add +
-                    return "+" + phoneNumber;
-                } else {
-                    // Number doesn't have country code, add it
-                    return "+" + code + phoneNumber;
-                }
-            }
-        }
-
-        // If country not found or null, try to infer from number length
-        // Numbers with 10+ digits might already have country code, just add +
-        if (phoneNumber.length() >= 10) {
-            return "+" + phoneNumber;
-        }
-
-        // Short numbers - assume it needs country code, default to US
-        // The validator will then try both the detected country AND US as fallback
-        return "+1" + phoneNumber;
-    }
 }
