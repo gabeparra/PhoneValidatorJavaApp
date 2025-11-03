@@ -15,6 +15,53 @@ echo ""
 # Get the project root directory
 PROJECT_ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 
+# Create logs directory
+mkdir -p "$PROJECT_ROOT/logs"
+
+# Check dependencies
+echo -e "${BLUE}🔍 Checking dependencies...${NC}"
+
+if ! command -v python3 &> /dev/null; then
+    echo -e "${RED}❌ Python 3 not found. Please install Python 3.8+${NC}"
+    exit 1
+fi
+
+if ! command -v npm &> /dev/null; then
+    echo -e "${RED}❌ npm not found. Please install Node.js 16+${NC}"
+    exit 1
+fi
+
+if ! command -v java &> /dev/null; then
+    echo -e "${RED}❌ Java not found. Please install Java 8+${NC}"
+    exit 1
+fi
+
+if ! command -v mvn &> /dev/null; then
+    echo -e "${RED}❌ Maven not found. Please install Maven 3.5+${NC}"
+    exit 1
+fi
+
+echo -e "${GREEN}✓ All dependencies found${NC}"
+echo ""
+
+# Check if ports are in use
+echo -e "${BLUE}🔍 Checking ports...${NC}"
+
+if lsof -Pi :8000 -sTCP:LISTEN -t >/dev/null 2>&1; then
+    echo -e "${YELLOW}⚠️  Port 8000 is already in use${NC}"
+    echo -e "${YELLOW}   Kill existing process with: lsof -ti:8000 | xargs kill${NC}"
+    exit 1
+fi
+
+if lsof -Pi :3000 -sTCP:LISTEN -t >/dev/null 2>&1; then
+    echo -e "${YELLOW}⚠️  Port 3000 is already in use${NC}"
+    echo -e "${YELLOW}   Kill existing process with: lsof -ti:3000 | xargs kill${NC}"
+    exit 1
+fi
+
+echo -e "${GREEN}✓ Ports 8000 and 3000 are available${NC}"
+echo ""
+
 # Check if JAR file exists
 if [ ! -f "$PROJECT_ROOT/target/phone-validator-1.0.0.jar" ]; then
     echo -e "${YELLOW}⚠️  JAR file not found. Building...${NC}"
@@ -25,6 +72,7 @@ if [ ! -f "$PROJECT_ROOT/target/phone-validator-1.0.0.jar" ]; then
         exit 1
     fi
     echo -e "${GREEN}✓ JAR built successfully${NC}"
+    echo ""
 fi
 
 # Check if venv exists, if not create it
@@ -35,6 +83,7 @@ if [ ! -d "$PROJECT_ROOT/venv" ]; then
     source venv/bin/activate
     pip install -q -r api/requirements.txt
     echo -e "${GREEN}✓ Virtual environment created${NC}"
+    echo ""
 fi
 
 # Activate virtual environment
@@ -46,7 +95,12 @@ if [ ! -d "$PROJECT_ROOT/my-frontend/node_modules" ]; then
     echo -e "${YELLOW}⚠️  Frontend dependencies not found. Installing...${NC}"
     cd "$PROJECT_ROOT/my-frontend"
     npm install --silent
+    if [ $? -ne 0 ]; then
+        echo -e "${RED}❌ Failed to install frontend dependencies${NC}"
+        exit 1
+    fi
     echo -e "${GREEN}✓ Frontend dependencies installed${NC}"
+    echo ""
 fi
 
 echo ""
@@ -58,6 +112,7 @@ echo ""
 # Start API in background
 echo -e "${BLUE}🚀 Starting API on port 8000...${NC}"
 cd "$PROJECT_ROOT"
+source venv/bin/activate
 uvicorn api.main:app --host 0.0.0.0 --port 8000 > logs/api.log 2>&1 &
 API_PID=$!
 echo -e "${GREEN}✓ API started (PID: $API_PID)${NC}"
