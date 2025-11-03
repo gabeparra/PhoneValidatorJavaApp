@@ -98,63 +98,97 @@ public class ExcelParser implements DataParser {
             return columnIndex;
         }
 
+        // Debug: Print all headers to help troubleshoot
+        System.out.println("🔍 Scanning headers...");
+        for (int i = 0; i < headerRow.getLastCellNum(); i++) {
+            Cell cell = headerRow.getCell(i);
+            if (cell != null) {
+                String headerValue = getCellValueAsString(cell);
+                System.out.println("   Column " + i + ": '" + headerValue + "'");
+            }
+        }
+        System.out.println();
+
         for (int i = 0; i < headerRow.getLastCellNum(); i++) {
             Cell cell = headerRow.getCell(i);
             if (cell == null)
                 continue;
 
-            String header = getCellValueAsString(cell).toLowerCase().trim();
+            String header = getCellValueAsString(cell);
+            if (header == null)
+                continue;
+
+            String headerLower = header.toLowerCase().trim();
 
             // ID columns - EMPLID, SEVIS ID, or just ID
-            if (header.contains("emplid") || 
-                (header.contains("sevis") && header.contains("id")) || 
-                header.equals("id")) {
+            if (headerLower.contains("emplid") ||
+                    (headerLower.contains("sevis") && headerLower.contains("id")) ||
+                    headerLower.equals("id")) {
                 if (!columnIndex.containsKey("id")) {
                     columnIndex.put("id", i);
+                    System.out.println("   ✓ Found ID at column " + i + ": '" + header + "'");
                 }
             }
             // Email columns - prefer personal email over campus email
-            else if (header.contains("personal") && header.contains("email")) {
-                columnIndex.put("email", i);  // Override with personal email
-            } else if (header.contains("campus") && header.contains("email")) {
+            else if (headerLower.contains("personal") && headerLower.contains("email")) {
+                columnIndex.put("email", i); // Override with personal email
+                System.out.println("   ✓ Found Personal Email at column " + i + ": '" + header + "'");
+            } else if (headerLower.contains("campus") && headerLower.contains("email")) {
                 if (!columnIndex.containsKey("email")) {
                     columnIndex.put("email", i);
+                    System.out.println("   ✓ Found Campus Email at column " + i + ": '" + header + "'");
                 }
-            } else if (header.equals("email") || header.contains("e-mail")) {
+            } else if (headerLower.equals("email") || headerLower.contains("e-mail")) {
                 if (!columnIndex.containsKey("email")) {
                     columnIndex.put("email", i);
+                    System.out.println("   ✓ Found Email at column " + i + ": '" + header + "'");
                 }
             }
             // Name columns
-            else if (header.contains("first") && header.contains("name")) {
+            else if (headerLower.contains("first") && headerLower.contains("name")) {
                 columnIndex.put("first_name", i);
-            } else if (header.contains("given") && header.contains("name")) {
+                System.out.println("   ✓ Found First Name at column " + i + ": '" + header + "'");
+            } else if (headerLower.contains("given") && headerLower.contains("name")) {
                 columnIndex.put("first_name", i);
-            } else if (header.contains("last") && header.contains("name")) {
+                System.out.println("   ✓ Found Given Name at column " + i + ": '" + header + "'");
+            } else if (headerLower.contains("last") && headerLower.contains("name")) {
                 columnIndex.put("last_name", i);
-            } else if (header.contains("surname") || header.contains("primary name")) {
+                System.out.println("   ✓ Found Last Name at column " + i + ": '" + header + "'");
+            } else if (headerLower.contains("surname") || headerLower.contains("primary name")) {
                 columnIndex.put("last_name", i);
+                System.out.println("   ✓ Found Surname at column " + i + ": '" + header + "'");
             }
             // Phone columns - just "phone" or variations
-            else if (header.equals("phone")) {
+            else if (headerLower.equals("phone")) {
                 columnIndex.put("phone_number", i);
-            } else if (header.contains("phone") && !header.contains("country") && !header.contains("code")) {
+                System.out.println("   ✓ Found Phone at column " + i + ": '" + header + "'");
+            } else if (headerLower.contains("phone") && !headerLower.contains("country")
+                    && !headerLower.contains("code")) {
                 if (!columnIndex.containsKey("phone_number")) {
                     columnIndex.put("phone_number", i);
+                    System.out.println("   ✓ Found Phone (variant) at column " + i + ": '" + header + "'");
                 }
-            } else if (header.contains("telephone") && header.contains("u.s.")) {
+            } else if (headerLower.contains("telephone") && headerLower.contains("u.s.")) {
                 columnIndex.put("us_telephone", i);
-            } else if (header.contains("telephone") && header.contains("foreign") && !header.contains("code")) {
+                System.out.println("   ✓ Found US Telephone at column " + i + ": '" + header + "'");
+            } else if (headerLower.contains("telephone") && headerLower.contains("foreign")
+                    && !headerLower.contains("code")) {
                 columnIndex.put("foreign_telephone", i);
+                System.out.println("   ✓ Found Foreign Telephone at column " + i + ": '" + header + "'");
             }
-            // Country columns
-            else if (header.contains("count") || header.contains("citizenship")) {
+            // Country columns - FIXED: specifically check for "country" not just "count"
+            // This prevents matching "1st Check", "2nd Check", etc.
+            else if (headerLower.equals("country") ||
+                    (headerLower.contains("country") && !headerLower.contains("check")) ||
+                    headerLower.contains("citizenship")) {
                 if (!columnIndex.containsKey("country")) {
                     columnIndex.put("country", i);
+                    System.out.println("   ✓ Found Country at column " + i + ": '" + header + "'");
                 }
             }
         }
 
+        System.out.println();
         return columnIndex;
     }
 
@@ -269,7 +303,7 @@ public class ExcelParser implements DataParser {
             return phoneNumber;
         }
 
-        // Already has + prefix
+        // Already has + prefix - return as-is
         if (phoneNumber.startsWith("+")) {
             return phoneNumber;
         }
@@ -318,7 +352,16 @@ public class ExcelParser implements DataParser {
 
             String code = countryCodes.get(countryUpper);
             if (code != null) {
-                return "+" + code + phoneNumber;
+                // FIX: Check if phone number already starts with the country code
+                // If it does, just add the + prefix
+                // If it doesn't, add + and country code
+                if (phoneNumber.startsWith(code)) {
+                    // Number already has country code, just add +
+                    return "+" + phoneNumber;
+                } else {
+                    // Number doesn't have country code, add it
+                    return "+" + code + phoneNumber;
+                }
             }
         }
 
