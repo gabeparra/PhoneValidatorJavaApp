@@ -73,6 +73,7 @@ class PhoneNumber(BaseModel):
     type: Optional[str] = None
     platform: Optional[str] = None
     error: Optional[str] = None
+    validationMethod: Optional[str] = None 
 
 class ValidationResponse(BaseModel):
     status: str

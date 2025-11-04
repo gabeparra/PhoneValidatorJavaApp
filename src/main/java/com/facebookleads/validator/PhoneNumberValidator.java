@@ -87,6 +87,8 @@ public class PhoneNumberValidator {
                 continue;
             }
 
+            // ... existing code ...
+
             try {
                 String originalPhoneNumber = phoneNumberStr; // SAVE ORIGINAL
 
@@ -95,6 +97,7 @@ public class PhoneNumberValidator {
 
                 boolean isValid = false;
                 PhoneNumber validPhoneNumber = null;
+                String validationMethod = null;  // ← ADD THIS
 
                 // Step 1: Try as-is with + prefix (auto-detect country code)
                 try {
@@ -106,6 +109,7 @@ public class PhoneNumberValidator {
                     if (phoneUtil.isValidNumber(phoneNumber)) {
                         isValid = true;
                         validPhoneNumber = phoneNumber;
+                        validationMethod = "original";  // ← ADD THIS
                     }
                 } catch (NumberParseException e) {
                     // Continue to step 2
@@ -119,6 +123,7 @@ public class PhoneNumberValidator {
                         if (phoneUtil.isValidNumber(phoneNumber)) {
                             isValid = true;
                             validPhoneNumber = phoneNumber;
+                            validationMethod = "country_code";  // ← ADD THIS
                         }
                     } catch (NumberParseException e) {
                         // Continue to step 3
@@ -132,6 +137,7 @@ public class PhoneNumberValidator {
                         if (phoneUtil.isValidNumber(phoneNumber)) {
                             isValid = true;
                             validPhoneNumber = phoneNumber;
+                            validationMethod = "us_fallback";  // ← ADD THIS
                         }
                     } catch (NumberParseException e) {
                         // All attempts failed
@@ -156,7 +162,8 @@ public class PhoneNumberValidator {
                             countryCode,
                             regionCode != null ? regionCode : "Unknown",
                             numberType,
-                            record.getPlatform()));
+                            record.getPlatform(),
+                            validationMethod));  // ← ADD THIS PARAMETER
                 } else {
                     // Invalid for all attempted methods
                     String errorMsg = detectedRegion != null

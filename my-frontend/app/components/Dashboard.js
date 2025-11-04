@@ -6,6 +6,7 @@ import axios from 'axios';
 export default function Dashboard({ data, onReset }) {
   const [activeTab, setActiveTab] = useState('overview');
   const [searchTerm, setSearchTerm] = useState('');
+  const [validationMethodFilter, setValidationMethodFilter] = useState('all');
   const [manualTestResult, setManualTestResult] = useState(null);
   const [testLoading, setTestLoading] = useState(false);
   const [selectedNumber, setSelectedNumber] = useState(null);
@@ -48,7 +49,7 @@ export default function Dashboard({ data, onReset }) {
 
   const filterNumbers = (numbers) => {
     if (!searchTerm) return numbers;
-    
+
     const term = searchTerm.toLowerCase();
     return numbers.filter(
       num =>
@@ -57,6 +58,11 @@ export default function Dashboard({ data, onReset }) {
         num.email?.toLowerCase().includes(term) ||
         num.name?.toLowerCase().includes(term)
     );
+  };
+
+  const filterByValidationMethod = (numbers) => {
+    if (validationMethodFilter === 'all') return numbers;
+    return numbers.filter(num => num.validationMethod === validationMethodFilter);
   };
 
   const handleViewDetails = (number) => {
@@ -68,7 +74,7 @@ export default function Dashboard({ data, onReset }) {
   const ManualTestResultDisplay = ({ result }) => (
     <div className="space-y-3">
       <div className="bg-white rounded p-3 border border-gray-200">
-        <p className="text-sm text-gray-600">
+        <p className="text-sm text-gray-700">
           <strong>Input:</strong> <span className="font-mono">{result.input}</span>
         </p>
       </div>
@@ -76,32 +82,32 @@ export default function Dashboard({ data, onReset }) {
       {result.valid ? (
         <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
           <div className="bg-white rounded p-3 border border-green-200">
-            <p className="text-xs text-gray-500 uppercase tracking-wide font-semibold">E.164 Format</p>
+            <p className="text-xs text-gray-600 uppercase tracking-wide font-semibold">E.164 Format</p>
             <p className="text-sm font-mono text-gray-900 mt-1">{result.e164}</p>
           </div>
-          
+
           <div className="bg-white rounded p-3 border border-green-200">
-            <p className="text-xs text-gray-500 uppercase tracking-wide font-semibold">International Format</p>
+            <p className="text-xs text-gray-600 uppercase tracking-wide font-semibold">International Format</p>
             <p className="text-sm font-mono text-gray-900 mt-1">{result.international}</p>
           </div>
-          
+
           <div className="bg-white rounded p-3 border border-green-200">
-            <p className="text-xs text-gray-500 uppercase tracking-wide font-semibold">National Format</p>
+            <p className="text-xs text-gray-600 uppercase tracking-wide font-semibold">National Format</p>
             <p className="text-sm font-mono text-gray-900 mt-1">{result.national}</p>
           </div>
-          
+
           <div className="bg-white rounded p-3 border border-green-200">
-            <p className="text-xs text-gray-500 uppercase tracking-wide font-semibold">Country Code</p>
+            <p className="text-xs text-gray-600 uppercase tracking-wide font-semibold">Country Code</p>
             <p className="text-sm font-mono text-gray-900 mt-1">{result.countryCode}</p>
           </div>
-          
+
           <div className="bg-white rounded p-3 border border-green-200">
-            <p className="text-xs text-gray-500 uppercase tracking-wide font-semibold">Region/Country</p>
+            <p className="text-xs text-gray-600 uppercase tracking-wide font-semibold">Region/Country</p>
             <p className="text-sm font-mono text-gray-900 mt-1">{result.region}</p>
           </div>
-          
+
           <div className="bg-white rounded p-3 border border-green-200">
-            <p className="text-xs text-gray-500 uppercase tracking-wide font-semibold">Phone Type</p>
+            <p className="text-xs text-gray-600 uppercase tracking-wide font-semibold">Phone Type</p>
             <p className="text-sm font-mono text-gray-900 mt-1">{result.type}</p>
           </div>
         </div>
@@ -155,7 +161,7 @@ export default function Dashboard({ data, onReset }) {
     }
   };
 
-  const validFiltered = filterNumbers(data.valid_numbers);
+  const validFiltered = filterByValidationMethod(filterNumbers(data.valid_numbers));
   const invalidFiltered = filterNumbers(data.invalid_numbers);
 
   // Build tabs array - include manual test tab
@@ -168,18 +174,18 @@ export default function Dashboard({ data, onReset }) {
 
   return (
     <div className="bg-white rounded-lg shadow-lg overflow-hidden">
-      {/* Header */}
-      <div className="bg-gradient-to-r from-indigo-600 to-purple-600 px-6 py-8 text-white">
+      {/* Header - Black background with white text and yellow accents */}
+      <div className="bg-black px-6 py-8 text-white border-b-4 border-yellow-400">
         <div className="flex justify-between items-start">
           <div>
             <h2 className="text-2xl font-bold mb-2">Validation Results</h2>
-            <p className="text-indigo-100">
+            <p className="text-gray-300">
               Processed on {new Date(data.timestamp).toLocaleString()}
             </p>
           </div>
           <button
             onClick={onReset}
-            className="bg-white text-indigo-600 px-4 py-2 rounded-lg font-medium hover:bg-indigo-50 transition-colors"
+            className="bg-yellow-400 text-black px-4 py-2 rounded-lg font-medium hover:bg-yellow-500 transition-colors"
           >
             Upload New File
           </button>
@@ -187,25 +193,25 @@ export default function Dashboard({ data, onReset }) {
 
         {/* Stats Grid */}
         <div className="grid grid-cols-1 md:grid-cols-4 gap-4 mt-6">
-          <div className="bg-white/10 backdrop-blur-sm rounded-lg p-4">
-            <p className="text-indigo-100 text-sm">Total Numbers</p>
-            <p className="text-3xl font-bold mt-1">{data.total_numbers}</p>
+          <div className="bg-gray-900 rounded-lg p-4 border-l-4 border-yellow-400">
+            <p className="text-gray-400 text-sm">Total Numbers</p>
+            <p className="text-3xl font-bold mt-1 text-white">{data.total_numbers}</p>
           </div>
-          <div className="bg-white/10 backdrop-blur-sm rounded-lg p-4">
-            <p className="text-indigo-100 text-sm">Valid Numbers</p>
-            <p className="text-3xl font-bold mt-1 text-green-300">
+          <div className="bg-gray-900 rounded-lg p-4 border-l-4 border-yellow-400">
+            <p className="text-gray-400 text-sm">Valid Numbers</p>
+            <p className="text-3xl font-bold mt-1 text-green-400">
               {data.valid_count}
             </p>
           </div>
-          <div className="bg-white/10 backdrop-blur-sm rounded-lg p-4">
-            <p className="text-indigo-100 text-sm">Invalid Numbers</p>
-            <p className="text-3xl font-bold mt-1 text-red-300">
+          <div className="bg-gray-900 rounded-lg p-4 border-l-4 border-yellow-400">
+            <p className="text-gray-400 text-sm">Invalid Numbers</p>
+            <p className="text-3xl font-bold mt-1 text-red-400">
               {data.invalid_count}
             </p>
           </div>
-          <div className="bg-white/10 backdrop-blur-sm rounded-lg p-4">
-            <p className="text-indigo-100 text-sm">Success Rate</p>
-            <p className="text-3xl font-bold mt-1">{data.success_rate.toFixed(1)}%</p>
+          <div className="bg-gray-900 rounded-lg p-4 border-l-4 border-yellow-400">
+            <p className="text-gray-400 text-sm">Success Rate</p>
+            <p className="text-3xl font-bold mt-1 text-yellow-400">{data.success_rate.toFixed(1)}%</p>
           </div>
         </div>
       </div>
@@ -217,11 +223,10 @@ export default function Dashboard({ data, onReset }) {
             <button
               key={tab.id}
               onClick={() => setActiveTab(tab.id)}
-              className={`px-6 py-4 text-sm font-medium border-b-2 transition-colors whitespace-nowrap ${
-                activeTab === tab.id
-                  ? 'border-indigo-500 text-indigo-600'
-                  : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
-              }`}
+              className={`px-6 py-4 text-sm font-medium border-b-2 transition-colors whitespace-nowrap ${activeTab === tab.id
+                ? 'border-yellow-400 text-yellow-600'
+                : 'border-transparent text-gray-700 hover:text-gray-900 hover:border-gray-300'
+                }`}
             >
               {tab.label}
             </button>
@@ -234,25 +239,65 @@ export default function Dashboard({ data, onReset }) {
         {activeTab === 'overview' && (
           <div className="space-y-6">
             <div>
-              <h3 className="text-lg font-semibold mb-4">Country Breakdown</h3>
-              <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
-                {Object.entries(data.country_breakdown).map(([country, count]) => (
-                  <div
-                    key={country}
-                    className="bg-gray-50 rounded-lg p-4 border border-gray-200"
-                  >
-                    <p className="text-2xl font-bold text-gray-900">{count}</p>
-                    <p className="text-sm text-gray-600">{country}</p>
+              <h3 className="text-lg font-semibold mb-4 text-black">Country Breakdown</h3>
+              {(() => {
+                const countryNames = {
+                  'US': 'United States',
+                  'BR': 'Brazil',
+                  'MX': 'Mexico',
+                  'CO': 'Colombia',
+                  'CR': 'Costa Rica',
+                  'ES': 'Spain',
+                  'CA': 'Canada',
+                  'AR': 'Argentina',
+                  'BD': 'Bangladesh',
+                  'CL': 'Chile',
+                  'CN': 'China',
+                  'EC': 'Ecuador',
+                  'EG': 'Egypt',
+                  'SV': 'El Salvador',
+                  'HN': 'Honduras',
+                  'IN': 'India',
+                  'IL': 'Israel',
+                  'KZ': 'Kazakhstan',
+                  'KG': 'Kyrgyzstan',
+                  'MA': 'Morocco',
+                  'NP': 'Nepal',
+                  'NG': 'Nigeria',
+                  'PK': 'Pakistan',
+                  'PE': 'Peru',
+                  'RU': 'Russia',
+                  'SA': 'Saudi Arabia',
+                  'TR': 'Turkey',
+                  'UZ': 'Uzbekistan',
+                  'VE': 'Venezuela',
+                  'VN': 'Vietnam',
+                  'ZM': 'Zambia'
+                };
+
+                return (
+                  <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
+                    {Object.entries(data.country_breakdown).map(([country, count]) => (
+                      <div
+                        key={country}
+                        className="bg-white rounded-lg p-6 shadow-md hover:shadow-lg transition-shadow border-4 border-yellow-400"
+                      >
+                        <p className="text-3xl font-bold text-black">{count}</p>
+                        <p className="text-sm font-semibold text-black mt-2">
+                          {countryNames[country] || country}
+                        </p>
+                      </div>
+                    ))}
                   </div>
-                ))}
-              </div>
+                );
+              })()}
             </div>
 
             <div>
-              <h3 className="text-lg font-semibold mb-4">Download Options</h3>
+              <h3 className="text-lg font-semibold mb-4 text-black">Download Options</h3>
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <div className="border border-gray-200 rounded-lg p-4">
-                  <h4 className="font-medium mb-2">Valid Numbers</h4>
+                  <h4 className="font-medium mb-2 text-black">Valid Numbers</h4>
                   <div className="flex gap-2">
                     <button
                       onClick={() => downloadJSON(data.valid_numbers, 'valid_numbers.json')}
@@ -269,7 +314,7 @@ export default function Dashboard({ data, onReset }) {
                   </div>
                 </div>
                 <div className="border border-gray-200 rounded-lg p-4">
-                  <h4 className="font-medium mb-2">Invalid Numbers</h4>
+                  <h4 className="font-medium mb-2 text-black">Invalid Numbers</h4>
                   <div className="flex gap-2">
                     <button
                       onClick={() => downloadJSON(data.invalid_numbers, 'invalid_numbers.json')}
@@ -298,46 +343,91 @@ export default function Dashboard({ data, onReset }) {
                 placeholder="Search by phone, email, or name..."
                 value={searchTerm}
                 onChange={(e) => setSearchTerm(e.target.value)}
-                className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-transparent"
+                className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-yellow-400 focus:border-transparent"
               />
             </div>
 
+            {/* Validation Method Filter - Only show for valid numbers */}
+            {activeTab === 'valid' && (
+              <div className="mb-4 flex gap-2 flex-wrap">
+                <button
+                  onClick={() => setValidationMethodFilter('all')}
+                  className={`px-4 py-2 rounded-lg font-medium transition-colors ${validationMethodFilter === 'all'
+                    ? 'bg-yellow-400 text-black'
+                    : 'bg-gray-200 text-gray-800 hover:bg-gray-300'
+                    }`}
+                >
+                  All ({data.valid_numbers.length})
+                </button>
+                <button
+                  onClick={() => setValidationMethodFilter('original')}
+                  className={`px-4 py-2 rounded-lg font-medium transition-colors ${validationMethodFilter === 'original'
+                    ? 'bg-yellow-400 text-black'
+                    : 'bg-gray-200 text-gray-800 hover:bg-gray-300'
+                    }`}
+                >
+                  Original Format ({data.valid_numbers.filter(n => n.validationMethod === 'original').length})
+                </button>
+                <button
+                  onClick={() => setValidationMethodFilter('country_code')}
+                  className={`px-4 py-2 rounded-lg font-medium transition-colors ${validationMethodFilter === 'country_code'
+                    ? 'bg-yellow-400 text-black'
+                    : 'bg-gray-200 text-gray-800 hover:bg-gray-300'
+                    }`}
+                >
+                  Country Code ({data.valid_numbers.filter(n => n.validationMethod === 'country_code').length})
+                </button>
+                <button
+                  onClick={() => setValidationMethodFilter('us_fallback')}
+                  className={`px-4 py-2 rounded-lg font-medium transition-colors ${validationMethodFilter === 'us_fallback'
+                    ? 'bg-yellow-400 text-black'
+                    : 'bg-gray-200 text-gray-800 hover:bg-gray-300'
+                    }`}
+                >
+                  US +1 Fallback ({data.valid_numbers.filter(n => n.validationMethod === 'us_fallback').length})
+                </button>
+              </div>
+            )}
+
             <div className="overflow-x-auto">
               <table className="min-w-full divide-y divide-gray-200">
-                <thead className="bg-gray-50">
+                <thead className="bg-gray-100">
                   <tr>
-                    <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">
+                    <th className="px-4 py-3 text-left text-xs font-medium text-gray-700 uppercase">
                       Row
                     </th>
-                    <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">
+                    <th className="px-4 py-3 text-left text-xs font-medium text-gray-700 uppercase">
                       Original Number
                     </th>
                     {activeTab === 'valid' ? (
                       <>
-                        <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">
+                        <th className="px-4 py-3 text-left text-xs font-medium text-gray-700 uppercase">
                           E164 Format
                         </th>
-                        <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">
+                        <th className="px-4 py-3 text-left text-xs font-medium text-gray-700 uppercase">
                           Country
                         </th>
-                        <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">
+                        <th className="px-4 py-3 text-left text-xs font-medium text-gray-700 uppercase">
                           Type
+                        </th>
+                        <th className="px-4 py-3 text-left text-xs font-medium text-gray-700 uppercase">
+                          Method
                         </th>
                       </>
                     ) : (
                       <>
-                        <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">
+                        <th className="px-4 py-3 text-left text-xs font-medium text-gray-700 uppercase">
                           Error
                         </th>
-                        <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">
+                        <th className="px-4 py-3 text-left text-xs font-medium text-gray-700 uppercase">
                           Name
                         </th>
                       </>
                     )}
-                    <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">
+                    <th className="px-4 py-3 text-left text-xs font-medium text-gray-700 uppercase">
                       Email
                     </th>
-                    <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">
+                    <th className="px-4 py-3 text-left text-xs font-medium text-gray-700 uppercase">
                       Actions
                     </th>
                   </tr>
@@ -365,6 +455,15 @@ export default function Dashboard({ data, onReset }) {
                                 {number.type}
                               </span>
                             </td>
+                            <td className="px-4 py-3 text-sm">
+                              <span className={`px-2 py-1 text-xs font-medium rounded-full ${number.validationMethod === 'original' ? 'bg-green-100 text-green-800' :
+                                number.validationMethod === 'country_code' ? 'bg-blue-100 text-blue-800' :
+                                  number.validationMethod === 'us_fallback' ? 'bg-amber-100 text-amber-800' :
+                                    'bg-gray-100 text-gray-800'
+                                }`}>
+                                {number.validationMethod || 'Unknown'}
+                              </span>
+                            </td>
                           </>
                         ) : (
                           <>
@@ -382,7 +481,7 @@ export default function Dashboard({ data, onReset }) {
                         <td className="px-4 py-3 text-sm">
                           <button
                             onClick={() => handleViewDetails(number)}
-                            className="text-indigo-600 hover:text-indigo-800 font-medium"
+                            className="text-yellow-600 hover:text-yellow-700 font-medium"
                           >
                             View
                           </button>
@@ -392,7 +491,7 @@ export default function Dashboard({ data, onReset }) {
                   )}
                 </tbody>
               </table>
-              
+
               {(activeTab === 'valid' ? validFiltered : invalidFiltered).length === 0 && (
                 <div className="text-center py-12 text-gray-500">
                   No results found
@@ -406,12 +505,12 @@ export default function Dashboard({ data, onReset }) {
         {activeTab === 'manual' && (
           <div className="space-y-6">
             {/* Test Input Form */}
-            <div className="bg-indigo-50 border-2 border-indigo-200 rounded-lg p-6">
-              <h3 className="text-lg font-semibold text-indigo-900 mb-4">Test Another Number</h3>
-              
+            <div className="bg-yellow-50 border-2 border-yellow-400 rounded-lg p-6">
+              <h3 className="text-lg font-semibold text-black mb-4">Test Another Number</h3>
+
               <div className="space-y-4">
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">
+                  <label className="block text-sm font-medium text-black mb-2">
                     Phone Number
                   </label>
                   <input
@@ -419,7 +518,7 @@ export default function Dashboard({ data, onReset }) {
                     id="manualTestInput"
                     placeholder="e.g., +1234567890 or 1234567890"
                     defaultValue=""
-                    className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-transparent"
+                    className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-yellow-400 focus:border-transparent"
                     onKeyPress={(e) => {
                       if (e.key === 'Enter' && !testLoading) {
                         handleTestPhone();
@@ -433,13 +532,13 @@ export default function Dashboard({ data, onReset }) {
                 </div>
 
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">
+                  <label className="block text-sm font-medium text-black mb-2">
                     Country (Fallback)
                   </label>
                   <select
                     id="manualTestCountry"
                     defaultValue="US"
-                    className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-transparent"
+                    className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-yellow-400 focus:border-transparent"
                     disabled={testLoading}
                   >
                     <option value="US">United States (+1)</option>
@@ -455,11 +554,10 @@ export default function Dashboard({ data, onReset }) {
                 <button
                   onClick={handleTestPhone}
                   disabled={testLoading}
-                  className={`w-full px-6 py-3 rounded-lg font-medium text-white transition-colors ${
-                    testLoading
-                      ? 'bg-gray-400 cursor-not-allowed'
-                      : 'bg-indigo-600 hover:bg-indigo-700'
-                  }`}
+                  className={`w-full px-6 py-3 rounded-lg font-medium text-black transition-colors ${testLoading
+                    ? 'bg-gray-300 cursor-not-allowed'
+                    : 'bg-yellow-400 hover:bg-yellow-500'
+                    }`}
                 >
                   {testLoading ? 'Testing...' : 'Test This Number'}
                 </button>
@@ -468,7 +566,7 @@ export default function Dashboard({ data, onReset }) {
 
             {/* Loading State */}
             {testLoading && (
-              <div className="bg-yellow-50 border-2 border-yellow-200 rounded-lg p-6 text-center">
+              <div className="bg-yellow-50 border-2 border-yellow-400 rounded-lg p-6 text-center">
                 <div className="flex items-center justify-center gap-3">
                   <svg className="animate-spin h-6 w-6 text-yellow-600" fill="none" viewBox="0 0 24 24">
                     <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
@@ -481,10 +579,9 @@ export default function Dashboard({ data, onReset }) {
 
             {/* Current Test Result */}
             {manualTestResult && !testLoading && (
-              <div className={`border-2 rounded-lg p-6 ${
-                manualTestResult.valid ? 'bg-green-50 border-green-200' : 'bg-red-50 border-red-200'
-              }`}>
-                <h4 className="text-lg font-semibold mb-4">
+              <div className={`border-2 rounded-lg p-6 ${manualTestResult.valid ? 'bg-green-50 border-green-200' : 'bg-red-50 border-red-200'
+                }`}>
+                <h4 className="text-lg font-semibold mb-4 text-black">
                   {manualTestResult.valid ? '✅ Test Result - Valid' : '❌ Test Result - Invalid'}
                 </h4>
                 <ManualTestResultDisplay result={manualTestResult} />
@@ -507,7 +604,7 @@ export default function Dashboard({ data, onReset }) {
         <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
           <div className="bg-white rounded-lg shadow-xl max-w-4xl w-full max-h-[90vh] overflow-hidden flex flex-col">
             {/* Modal Header */}
-            <div className="bg-gradient-to-r from-indigo-600 to-purple-600 px-6 py-4 text-white flex justify-between items-center">
+            <div className="bg-black px-6 py-4 text-white flex justify-between items-center border-b-4 border-yellow-400">
               <h3 className="text-xl font-bold">
                 {activeTab === 'valid' ? '✅ Valid Number Details' : '❌ Invalid Number Details'}
               </h3>
@@ -516,7 +613,7 @@ export default function Dashboard({ data, onReset }) {
                   setShowDetailsModal(false);
                   setSelectedNumber(null);
                 }}
-                className="text-white hover:text-gray-200 text-2xl font-bold"
+                className="text-white hover:text-yellow-400 text-2xl font-bold"
               >
                 ×
               </button>
@@ -527,14 +624,13 @@ export default function Dashboard({ data, onReset }) {
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 {Object.entries(selectedNumber).map(([key, value]) => (
                   <div key={key} className="bg-gray-50 rounded-lg p-4 border border-gray-200">
-                    <p className="text-xs text-gray-500 uppercase tracking-wide font-semibold mb-1">
+                    <p className="text-xs text-gray-600 uppercase tracking-wide font-semibold mb-1">
                       {key.replace(/([A-Z])/g, ' $1').trim()}
                     </p>
-                    <p className={`text-sm font-mono ${
-                      key === 'error' ? 'text-red-600' : 
-                      key === 'originalPhoneNumber' || key === 'e164' || key === 'international' || key === 'national' ? 'text-indigo-600' :
-                      'text-gray-900'
-                    }`}>
+                    <p className={`text-sm font-mono ${key === 'error' ? 'text-red-600' :
+                      key === 'originalPhoneNumber' || key === 'e164' || key === 'international' || key === 'national' ? 'text-yellow-600' :
+                        'text-gray-900'
+                      }`}>
                       {value !== null && value !== undefined ? String(value) : '—'}
                     </p>
                   </div>
@@ -551,7 +647,7 @@ export default function Dashboard({ data, onReset }) {
             </div>
 
             {/* Modal Footer */}
-            <div className="bg-gray-50 px-6 py-4 flex justify-end gap-3">
+            <div className="bg-gray-50 px-6 py-4 flex justify-end gap-3 border-t border-gray-200">
               <button
                 onClick={() => {
                   const blob = new Blob([JSON.stringify(selectedNumber, null, 2)], {
@@ -564,7 +660,7 @@ export default function Dashboard({ data, onReset }) {
                   a.click();
                   URL.revokeObjectURL(url);
                 }}
-                className="px-4 py-2 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 transition-colors"
+                className="px-4 py-2 bg-yellow-400 text-black rounded-lg hover:bg-yellow-500 transition-colors font-medium"
               >
                 Download JSON
               </button>

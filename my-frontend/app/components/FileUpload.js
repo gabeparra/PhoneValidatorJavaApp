@@ -23,7 +23,7 @@ export default function FileUpload({ onFileUpload, loading, error }) {
     e.preventDefault();
     e.stopPropagation();
     setDragActive(false);
-    
+
     if (e.dataTransfer.files && e.dataTransfer.files[0]) {
       setSelectedFile(e.dataTransfer.files[0]);
     }
@@ -47,8 +47,8 @@ export default function FileUpload({ onFileUpload, loading, error }) {
       return;
     }
 
-    const phoneToTest = manualNumber.startsWith('+') 
-      ? manualNumber 
+    const phoneToTest = manualNumber.startsWith('+')
+      ? manualNumber
       : `+${manualNumber}`;
 
     onFileUpload(null, phoneToTest, manualCountry);
@@ -59,13 +59,12 @@ export default function FileUpload({ onFileUpload, loading, error }) {
   return (
     <div className="max-w-2xl mx-auto space-y-6">
       {/* File Upload */}
-      <div className="bg-white rounded-lg shadow-lg p-8">
+      <div className="bg-white rounded-lg shadow-lg p-8 border-t-4 border-yellow-400">
         <div
-          className={`border-2 border-dashed rounded-lg p-12 text-center transition-colors ${
-            dragActive
-              ? 'border-indigo-500 bg-indigo-50'
-              : 'border-gray-300 hover:border-gray-400'
-          }`}
+          className={`border-2 border-dashed rounded-lg p-12 text-center transition-colors ${dragActive
+              ? 'border-yellow-400 bg-yellow-50'
+              : 'border-gray-300 hover:border-yellow-400'
+            }`}
           onDragEnter={handleDrag}
           onDragLeave={handleDrag}
           onDragOver={handleDrag}
@@ -87,11 +86,11 @@ export default function FileUpload({ onFileUpload, loading, error }) {
               />
             </svg>
           </div>
-          
+
           <div className="mb-4">
             <label
               htmlFor="file-upload"
-              className="cursor-pointer text-indigo-600 hover:text-indigo-500 font-medium"
+              className="cursor-pointer text-yellow-600 hover:text-yellow-700 font-medium"
             >
               Choose a file
             </label>
@@ -106,14 +105,14 @@ export default function FileUpload({ onFileUpload, loading, error }) {
             />
             <span className="text-gray-600"> or drag and drop</span>
           </div>
-          
+
           <p className="text-sm text-gray-500">
             CSV, Excel (.xlsx, .xls), or SQL files only
           </p>
         </div>
 
         {selectedFile && (
-          <div className="mt-4 p-4 bg-gray-50 rounded-lg">
+          <div className="mt-4 p-4 bg-gray-50 rounded-lg border-l-4 border-yellow-400">
             <div className="flex items-center justify-between">
               <div className="flex items-center">
                 <svg
@@ -147,24 +146,23 @@ export default function FileUpload({ onFileUpload, loading, error }) {
         )}
 
         {error && (
-          <div className="mt-4 p-4 bg-red-50 border border-red-200 rounded-lg">
-            <p className="text-sm text-red-600">{error}</p>
+          <div className="mt-4 p-4 bg-red-50 border-l-4 border-red-500 rounded-lg">
+            <p className="text-sm text-red-700">{error}</p>
           </div>
         )}
 
         <button
           onClick={handleSubmit}
           disabled={!selectedFile || loading}
-          className={`mt-6 w-full py-3 px-4 rounded-lg font-medium text-white transition-colors ${
-            !selectedFile || loading
-              ? 'bg-gray-400 cursor-not-allowed'
-              : 'bg-indigo-600 hover:bg-indigo-700'
-          }`}
+          className={`mt-6 w-full py-3 px-4 rounded-lg font-medium text-black transition-colors ${!selectedFile || loading
+              ? 'bg-gray-300 cursor-not-allowed'
+              : 'bg-yellow-400 hover:bg-yellow-500'
+            }`}
         >
           {loading ? (
             <span className="flex items-center justify-center">
               <svg
-                className="animate-spin -ml-1 mr-3 h-5 w-5 text-white"
+                className="animate-spin -ml-1 mr-3 h-5 w-5 text-black"
                 xmlns="http://www.w3.org/2000/svg"
                 fill="none"
                 viewBox="0 0 24 24"
@@ -192,10 +190,10 @@ export default function FileUpload({ onFileUpload, loading, error }) {
       </div>
 
       {/* Manual Number Testing */}
-      <div className="bg-white rounded-lg shadow-lg p-8">
+      <div className="bg-white rounded-lg shadow-lg p-8 border-t-4 border-yellow-400">
         <button
           onClick={() => setShowManualInput(!showManualInput)}
-          className="w-full flex items-center justify-between text-left font-semibold text-indigo-600 hover:text-indigo-700"
+          className="w-full flex items-center justify-between text-left font-semibold text-black hover:text-yellow-600"
         >
           <span>🔢 Test Individual Phone Number</span>
           <svg
@@ -210,7 +208,7 @@ export default function FileUpload({ onFileUpload, loading, error }) {
         {showManualInput && (
           <div className="mt-6 space-y-4">
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">
+              <label className="block text-sm font-medium text-black mb-2">
                 Phone Number
               </label>
               <input
@@ -218,23 +216,23 @@ export default function FileUpload({ onFileUpload, loading, error }) {
                 value={manualNumber}
                 onChange={(e) => setManualNumber(e.target.value)}
                 placeholder="e.g., +1234567890 or 1234567890"
-                className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-transparent"
+                className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-yellow-400 focus:border-transparent focus:outline-none"
                 onKeyPress={(e) => e.key === 'Enter' && handleTestNumber()}
                 disabled={loading}
               />
-              <p className="text-xs text-gray-500 mt-1">
+              <p className="text-xs text-gray-600 mt-1">
                 Include country code (e.g., +55 for Brazil, +1 for USA)
               </p>
             </div>
 
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">
+              <label className="block text-sm font-medium text-black mb-2">
                 Country (Fallback)
               </label>
               <select
                 value={manualCountry}
                 onChange={(e) => setManualCountry(e.target.value)}
-                className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-transparent"
+                className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-yellow-400 focus:border-transparent focus:outline-none"
                 disabled={loading}
               >
                 <option value="US">United States (+1)</option>
@@ -245,7 +243,7 @@ export default function FileUpload({ onFileUpload, loading, error }) {
                 <option value="ES">Spain (+34)</option>
                 <option value="CA">Canada (+1)</option>
               </select>
-              <p className="text-xs text-gray-500 mt-1">
+              <p className="text-xs text-gray-600 mt-1">
                 Used if country code not detected in number
               </p>
             </div>
@@ -253,11 +251,10 @@ export default function FileUpload({ onFileUpload, loading, error }) {
             <button
               onClick={handleTestNumber}
               disabled={loading || !manualNumber.trim()}
-              className={`w-full py-2 px-4 rounded-lg font-medium text-white transition-colors ${
-                loading || !manualNumber.trim()
-                  ? 'bg-gray-400 cursor-not-allowed'
-                  : 'bg-green-600 hover:bg-green-700'
-              }`}
+              className={`w-full py-2 px-4 rounded-lg font-medium text-black transition-colors ${loading || !manualNumber.trim()
+                  ? 'bg-gray-300 cursor-not-allowed'
+                  : 'bg-yellow-400 hover:bg-yellow-500'
+                }`}
             >
               Test This Number
             </button>

@@ -16,9 +16,12 @@ public class ValidPhoneRecord {
     private final String region;
     private final String type;
     private final String platform;
+    private final String validationMethod;  // ← ADD THIS
+    
     public ValidPhoneRecord(int rowNumber, String id, String email, String name,
                            String originalPhoneNumber, String e164, String international,
-                           String national, String countryCode, String region, String type, String platform) {
+                           String national, String countryCode, String region, String type, String platform,
+                           String validationMethod) {  // ← ADD PARAMETER
         this.rowNumber = rowNumber;
         this.id = id;
         this.email = email;
@@ -31,6 +34,7 @@ public class ValidPhoneRecord {
         this.region = region;
         this.type = type;
         this.platform = platform;
+        this.validationMethod = validationMethod;  // ← ADD THIS
     }
     
     // Getters
@@ -46,5 +50,5 @@ public class ValidPhoneRecord {
     public String getRegion() { return region; }
     public String getType() { return type; }
     public String getPlatform() { return platform; }
+    public String getValidationMethod() { return validationMethod; }  // ← ADD THIS GETTER
 }
-
