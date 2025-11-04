@@ -57,7 +57,8 @@ echo ""
 if ! command -v python3 &> /dev/null; then
     echo -e "${YELLOW}📦 Python 3 not found. Installing Python 3...${NC}"
     sudo apt update
-    sudo apt install -y python3 python3-pip python3-venv
+    PYTHON_VERSION=$(python3 --version | grep -oP '\d+\.\d+')
+    sudo apt install -y python3 python3-pip python3-venv python${PYTHON_VERSION}-venv
 else
     echo -e "${GREEN}✅ Python 3 is already installed${NC}"
     python3 --version
@@ -67,7 +68,7 @@ echo ""
 
 if ! command -v npm &> /dev/null; then
     echo -e "${YELLOW}📦 Node.js/npm not found. Installing Node.js...${NC}"
-    curl -fsSL https://deb.nodesource.com/setup_18.x | sudo -E bash -
+    curl -fsSL https://deb.nodesource.com/setup_20.x | sudo -E bash -
     sudo apt install -y nodejs
 else
     echo -e "${GREEN}✅ Node.js is already installed${NC}"

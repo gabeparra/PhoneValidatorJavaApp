@@ -1,6 +1,11 @@
 /** @type {import('next').NextConfig} */
 const nextConfig = {
-  /* config options here */
+  // Allow external access in development
+  experimental: {
+    allowedDevOrigins: ['*'], // Allow all origins in dev mode
+  },
+  // Optional: Disable strict mode if needed
+  reactStrictMode: true,
 };
 
 export default nextConfig;
