@@ -22,6 +22,7 @@ export default function Dashboard({ data, onReset }) {
   const [validationMethodFilter, setValidationMethodFilter] = useState(
     VALIDATION_METHOD_FILTERS.ALL
   );
+  const [invalidFilter, setInvalidFilter] = useState("all");
   const [manualTestResult, setManualTestResult] = useState(null);
   const [testLoading, setTestLoading] = useState(false);
   const [selectedNumber, setSelectedNumber] = useState(null);
@@ -85,12 +86,26 @@ export default function Dashboard({ data, onReset }) {
     );
   };
 
+  const filterByInvalidType = (numbers) => {
+    if (invalidFilter === "all") return numbers;
+    if (invalidFilter === "forceful") {
+      return numbers.filter((num) =>
+        num.error?.toLowerCase().includes("forceful testing")
+      );
+    }
+    if (invalidFilter === "fully_invalid") {
+      return numbers.filter(
+        (num) => !num.error?.toLowerCase().includes("forceful testing")
+      );
+    }
+    return numbers;
+  };
+
   const handleViewDetails = (number) => {
     setSelectedNumber(number);
     setShowDetailsModal(true);
   };
 
-  // Helper component to display test results
   const ManualTestResultDisplay = ({ result }) => (
     <div className="space-y-3">
       <div className="bg-white rounded p-3 border border-gray-200">
@@ -110,7 +125,6 @@ export default function Dashboard({ data, onReset }) {
               {result.e164}
             </p>
           </div>
-
           <div className="bg-white rounded p-3 border border-green-200">
             <p className="text-xs text-gray-600 uppercase tracking-wide font-semibold">
               International Format
@@ -119,7 +133,6 @@ export default function Dashboard({ data, onReset }) {
               {result.international}
             </p>
           </div>
-
           <div className="bg-white rounded p-3 border border-green-200">
             <p className="text-xs text-gray-600 uppercase tracking-wide font-semibold">
               National Format
@@ -128,7 +141,6 @@ export default function Dashboard({ data, onReset }) {
               {result.national}
             </p>
           </div>
-
           <div className="bg-white rounded p-3 border border-green-200">
             <p className="text-xs text-gray-600 uppercase tracking-wide font-semibold">
               Country Code
@@ -137,7 +149,6 @@ export default function Dashboard({ data, onReset }) {
               {result.countryCode}
             </p>
           </div>
-
           <div className="bg-white rounded p-3 border border-green-200">
             <p className="text-xs text-gray-600 uppercase tracking-wide font-semibold">
               Region/Country
@@ -146,7 +157,6 @@ export default function Dashboard({ data, onReset }) {
               {result.region}
             </p>
           </div>
-
           <div className="bg-white rounded p-3 border border-green-200">
             <p className="text-xs text-gray-600 uppercase tracking-wide font-semibold">
               Phone Type
@@ -166,7 +176,6 @@ export default function Dashboard({ data, onReset }) {
     </div>
   );
 
-  // Function to test a phone number
   const handleTestPhone = async () => {
     const phoneInput = document.getElementById("manualTestInput")?.value;
     const countryInput = document.getElementById("manualTestCountry")?.value;
@@ -188,7 +197,6 @@ export default function Dashboard({ data, onReset }) {
         { headers: { "Content-Type": "application/json" } }
       );
 
-      // Extract result from response
       const testResult = {
         input: phoneInput.trim(),
         valid: response.data.valid_count > 0,
@@ -212,9 +220,15 @@ export default function Dashboard({ data, onReset }) {
   const validFiltered = filterByValidationMethod(
     filterNumbers(data.valid_numbers)
   );
-  const invalidFiltered = filterNumbers(data.invalid_numbers);
+  const invalidFiltered = filterByInvalidType(
+    filterNumbers(data.invalid_numbers)
+  );
 
-  // Build tabs array - include manual test tab
+  const forcefulCount = data.invalid_numbers.filter((n) =>
+    n.error?.toLowerCase().includes("forceful testing")
+  ).length;
+  const fullyInvalidCount = data.invalid_numbers.length - forcefulCount;
+
   const tabs = [
     { id: TABS.OVERVIEW, label: "Overview" },
     { id: TABS.VALID, label: `Valid (${data.valid_count})` },
@@ -224,7 +238,6 @@ export default function Dashboard({ data, onReset }) {
 
   return (
     <div className="bg-white rounded-lg shadow-lg overflow-hidden">
-      {/* Header - Black background with white text and yellow accents */}
       <div className="bg-black px-6 py-8 text-white border-b-4 border-yellow-400">
         <div className="flex justify-between items-start">
           <div>
@@ -241,7 +254,6 @@ export default function Dashboard({ data, onReset }) {
           </button>
         </div>
 
-        {/* Stats Grid */}
         <div className="grid grid-cols-1 md:grid-cols-4 gap-4 mt-6">
           <div className="bg-gray-900 rounded-lg p-4 border-l-4 border-yellow-400">
             <p className="text-gray-400 text-sm">Total Numbers</p>
@@ -270,7 +282,6 @@ export default function Dashboard({ data, onReset }) {
         </div>
       </div>
 
-      {/* Tabs */}
       <div className="border-b border-gray-200">
         <nav className="flex -mb-px flex-wrap">
           {tabs.map((tab) => (
@@ -289,7 +300,6 @@ export default function Dashboard({ data, onReset }) {
         </nav>
       </div>
 
-      {/* Content */}
       <div className="p-6">
         {activeTab === TABS.OVERVIEW && (
           <div className="space-y-6">
@@ -392,7 +402,6 @@ export default function Dashboard({ data, onReset }) {
               />
             </div>
 
-            {/* Validation Method Filter - Only show for valid numbers */}
             {activeTab === TABS.VALID && (
               <div className="mb-4 flex gap-2 flex-wrap">
                 <button
@@ -476,28 +485,40 @@ export default function Dashboard({ data, onReset }) {
                   }
                   )
                 </button>
+              </div>
+            )}
+
+            {activeTab === TABS.INVALID && (
+              <div className="mb-4 flex gap-2 flex-wrap">
                 <button
-                  onClick={() =>
-                    setValidationMethodFilter(
-                      VALIDATION_METHOD_FILTERS.FORCEFUL
-                    )
-                  }
+                  onClick={() => setInvalidFilter("all")}
                   className={`px-4 py-2 rounded-lg text-sm font-medium transition-colors ${
-                    validationMethodFilter ===
-                    VALIDATION_METHOD_FILTERS.FORCEFUL
+                    invalidFilter === "all"
                       ? "bg-yellow-400 text-black"
                       : "bg-gray-200 text-gray-800 hover:bg-gray-300"
                   }`}
                 >
-                  Forceful Test (
-                  {
-                    data.valid_numbers.filter(
-                      (n) =>
-                        n.validationMethod ===
-                        VALIDATION_METHOD_FILTERS.FORCEFUL
-                    ).length
-                  }
-                  )
+                  All ({data.invalid_numbers.length})
+                </button>
+                <button
+                  onClick={() => setInvalidFilter("forceful")}
+                  className={`px-4 py-2 rounded-lg text-sm font-medium transition-colors ${
+                    invalidFilter === "forceful"
+                      ? "bg-yellow-400 text-black"
+                      : "bg-gray-200 text-gray-800 hover:bg-gray-300"
+                  }`}
+                >
+                  Forceful Test Issues ({forcefulCount})
+                </button>
+                <button
+                  onClick={() => setInvalidFilter("fully_invalid")}
+                  className={`px-4 py-2 rounded-lg text-sm font-medium transition-colors ${
+                    invalidFilter === "fully_invalid"
+                      ? "bg-yellow-400 text-black"
+                      : "bg-gray-200 text-gray-800 hover:bg-gray-300"
+                  }`}
+                >
+                  Fully Invalid ({fullyInvalidCount})
                 </button>
               </div>
             )}
@@ -512,34 +533,21 @@ export default function Dashboard({ data, onReset }) {
                     <th className="px-4 py-3 text-left text-xs font-medium text-gray-700 uppercase">
                       Original Number
                     </th>
-                    {activeTab === TABS.VALID ? (
-                      <>
-                        <th className="px-4 py-3 text-left text-xs font-medium text-gray-700 uppercase">
-                          Name
-                        </th>
-                        <th className="px-4 py-3 text-left text-xs font-medium text-gray-700 uppercase">
-                          Country from Form
-                        </th>
-                        <th className="px-4 py-3 text-left text-xs font-medium text-gray-700 uppercase">
-                          Validated Country
-                        </th>
-                        <th className="px-4 py-3 text-left text-xs font-medium text-gray-700 uppercase">
-                          Type
-                        </th>
-                        <th className="px-4 py-3 text-left text-xs font-medium text-gray-700 uppercase">
-                          Method
-                        </th>
-                      </>
-                    ) : (
-                      <>
-                        <th className="px-4 py-3 text-left text-xs font-medium text-gray-700 uppercase">
-                          Error
-                        </th>
-                        <th className="px-4 py-3 text-left text-xs font-medium text-gray-700 uppercase">
-                          Name
-                        </th>
-                      </>
-                    )}
+                    <th className="px-4 py-3 text-left text-xs font-medium text-gray-700 uppercase">
+                      Name
+                    </th>
+                    <th className="px-4 py-3 text-left text-xs font-medium text-gray-700 uppercase">
+                      Country from Form
+                    </th>
+                    <th className="px-4 py-3 text-left text-xs font-medium text-gray-700 uppercase">
+                      Validated Country
+                    </th>
+                    <th className="px-4 py-3 text-left text-xs font-medium text-gray-700 uppercase">
+                      Type
+                    </th>
+                    <th className="px-4 py-3 text-left text-xs font-medium text-gray-700 uppercase">
+                      {activeTab === TABS.VALID ? "Method" : "Issue Type"}
+                    </th>
                     <th className="px-4 py-3 text-left text-xs font-medium text-gray-700 uppercase">
                       Email
                     </th>
@@ -560,76 +568,90 @@ export default function Dashboard({ data, onReset }) {
                       <td className="px-4 py-3 text-sm text-gray-900 font-mono">
                         {number.originalPhoneNumber}
                       </td>
-                      {activeTab === TABS.VALID ? (
-                        <>
-                          <td className="px-4 py-3 text-sm text-gray-900">
-                            {number.name || "—"}
-                          </td>
-                          <td className="px-4 py-3 text-sm text-gray-900">
-                            {number.originalCountry ? (
-                              <span className="px-2 py-1 text-xs font-medium rounded bg-gray-100 text-gray-700 whitespace-nowrap inline-block">
-                                {number.originalCountry}
-                              </span>
-                            ) : (
-                              <span className="text-gray-400">—</span>
-                            )}
-                          </td>
-                          <td className="px-4 py-3 text-sm text-gray-900">
-                            <span
-                              className={`px-2 py-1 text-xs font-medium rounded whitespace-nowrap inline-block ${
-                                number.originalCountry &&
-                                number.originalCountry.toUpperCase() !==
-                                  (
-                                    number.region || number.countryCode
-                                  )?.toUpperCase()
+                      <td className="px-4 py-3 text-sm text-gray-900">
+                        {number.name || "—"}
+                      </td>
+                      <td className="px-4 py-3 text-sm text-gray-900">
+                        {number.originalCountry ? (
+                          <span className="px-2 py-1 text-xs font-medium rounded bg-gray-100 text-gray-700 whitespace-nowrap inline-block">
+                            {number.originalCountry}
+                          </span>
+                        ) : (
+                          <span className="text-gray-400">—</span>
+                        )}
+                      </td>
+                      <td className="px-4 py-3 text-sm text-gray-900">
+                        {number.region ? (
+                          <span
+                            className={`px-2 py-1 text-xs font-medium rounded whitespace-nowrap inline-block ${
+                              activeTab === TABS.VALID
+                                ? number.originalCountry &&
+                                  number.originalCountry.toUpperCase() !==
+                                    (
+                                      number.region || number.countryCode
+                                    )?.toUpperCase()
                                   ? "bg-yellow-100 text-yellow-800"
                                   : "bg-green-100 text-green-800"
-                              }`}
-                            >
-                              {getCountryName(
-                                number.region || number.countryCode
-                              )}
-                            </span>
-                          </td>
-                          <td className="px-4 py-3 text-sm">
-                            <span className="px-2 py-1 text-xs font-medium rounded-full bg-blue-100 text-blue-800">
-                              {number.type}
-                            </span>
-                          </td>
-                          <td className="px-4 py-3 text-sm">
-                            <span
-                              className={`px-2 py-1 text-xs font-medium rounded-full whitespace-nowrap ${
-                                number.validationMethod ===
-                                VALIDATION_METHOD_FILTERS.ORIGINAL
-                                  ? "bg-green-100 text-green-800"
-                                  : number.validationMethod ===
-                                    VALIDATION_METHOD_FILTERS.COUNTRY_CODE
-                                  ? "bg-blue-100 text-blue-800"
-                                  : number.validationMethod ===
-                                    VALIDATION_METHOD_FILTERS.US_FALLBACK
-                                  ? "bg-amber-100 text-amber-800"
-                                  : number.validationMethod ===
-                                    VALIDATION_METHOD_FILTERS.FORCEFUL
-                                  ? "bg-purple-100 text-purple-800"
-                                  : "bg-gray-100 text-gray-800"
-                              }`}
-                            >
-                              {getValidationMethodDisplay(
-                                number.validationMethod
-                              )}
-                            </span>
-                          </td>
-                        </>
-                      ) : (
-                        <>
-                          <td className="px-4 py-3 text-sm text-red-600">
-                            {number.error}
-                          </td>
-                          <td className="px-4 py-3 text-sm text-gray-900">
-                            {number.name}
-                          </td>
-                        </>
-                      )}
+                                : "bg-red-100 text-red-800"
+                            }`}
+                          >
+                            {getCountryName(
+                              number.region || number.countryCode
+                            )}
+                          </span>
+                        ) : (
+                          <span className="text-gray-400">—</span>
+                        )}
+                      </td>
+                      <td className="px-4 py-3 text-sm">
+                        {number.type ? (
+                          <span
+                            className={`px-2 py-1 text-xs font-medium rounded-full ${
+                              activeTab === TABS.VALID
+                                ? "bg-blue-100 text-blue-800"
+                                : "bg-gray-100 text-gray-800"
+                            }`}
+                          >
+                            {number.type}
+                          </span>
+                        ) : (
+                          <span className="text-gray-400">—</span>
+                        )}
+                      </td>
+                      <td className="px-4 py-3 text-sm">
+                        {activeTab === TABS.VALID ? (
+                          <span
+                            className={`px-2 py-1 text-xs font-medium rounded-full whitespace-nowrap ${
+                              number.validationMethod ===
+                              VALIDATION_METHOD_FILTERS.ORIGINAL
+                                ? "bg-green-100 text-green-800"
+                                : number.validationMethod ===
+                                  VALIDATION_METHOD_FILTERS.COUNTRY_CODE
+                                ? "bg-blue-100 text-blue-800"
+                                : number.validationMethod ===
+                                  VALIDATION_METHOD_FILTERS.US_FALLBACK
+                                ? "bg-amber-100 text-amber-800"
+                                : "bg-gray-100 text-gray-800"
+                            }`}
+                          >
+                            {getValidationMethodDisplay(
+                              number.validationMethod
+                            )}
+                          </span>
+                        ) : (
+                          <span
+                            className={`px-2 py-1 text-xs font-medium rounded-full whitespace-nowrap ${
+                              number.error?.toLowerCase().includes("forceful")
+                                ? "bg-orange-100 text-orange-800"
+                                : "bg-red-100 text-red-800"
+                            }`}
+                          >
+                            {number.error?.toLowerCase().includes("forceful")
+                              ? "Forceful Test"
+                              : "Invalid"}
+                          </span>
+                        )}
+                      </td>
                       <td className="px-4 py-3 text-sm text-gray-600">
                         {number.email}
                       </td>
@@ -656,15 +678,12 @@ export default function Dashboard({ data, onReset }) {
           </div>
         )}
 
-        {/* Manual Test Tab */}
         {activeTab === TABS.MANUAL && (
           <div className="space-y-6">
-            {/* Test Input Form */}
             <div className="bg-yellow-50 border-2 border-yellow-400 rounded-lg p-6">
               <h3 className="text-lg font-semibold text-black mb-4">
                 Test Another Number
               </h3>
-
               <div className="space-y-4">
                 <div>
                   <label className="block text-sm font-medium text-black mb-2">
@@ -687,7 +706,6 @@ export default function Dashboard({ data, onReset }) {
                     Include country code (e.g., +55 for Brazil, +1 for USA)
                   </p>
                 </div>
-
                 <div>
                   <label className="block text-sm font-medium text-black mb-2">
                     Country (Fallback)
@@ -708,7 +726,6 @@ export default function Dashboard({ data, onReset }) {
                     {DEFAULTS.PLACEHOLDER_TEXT.COUNTRY_FALLBACK}
                   </p>
                 </div>
-
                 <button
                   onClick={handleTestPhone}
                   disabled={testLoading}
@@ -723,7 +740,6 @@ export default function Dashboard({ data, onReset }) {
               </div>
             </div>
 
-            {/* Loading State */}
             {testLoading && (
               <div className="bg-yellow-50 border-2 border-yellow-400 rounded-lg p-6 text-center">
                 <div className="flex items-center justify-center gap-3">
@@ -753,7 +769,6 @@ export default function Dashboard({ data, onReset }) {
               </div>
             )}
 
-            {/* Current Test Result */}
             {manualTestResult && !testLoading && (
               <div
                 className={`border-2 rounded-lg p-6 ${
@@ -771,7 +786,6 @@ export default function Dashboard({ data, onReset }) {
               </div>
             )}
 
-            {/* Original Test Result (if exists) */}
             {data.manualTest && (
               <div className="bg-blue-50 border-2 border-blue-200 rounded-lg p-6">
                 <h4 className="text-lg font-semibold text-blue-900 mb-4">
@@ -784,11 +798,9 @@ export default function Dashboard({ data, onReset }) {
         )}
       </div>
 
-      {/* Details Modal */}
       {showDetailsModal && selectedNumber && (
         <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
           <div className="bg-white rounded-lg shadow-xl max-w-4xl w-full max-h-[90vh] overflow-hidden flex flex-col">
-            {/* Modal Header */}
             <div className="bg-black px-6 py-4 text-white flex justify-between items-center border-b-4 border-yellow-400">
               <h3 className="text-xl font-bold">
                 {activeTab === TABS.VALID
@@ -805,8 +817,6 @@ export default function Dashboard({ data, onReset }) {
                 ×
               </button>
             </div>
-
-            {/* Modal Content */}
             <div className="p-6 overflow-y-auto flex-1">
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 {Object.entries(selectedNumber).map(([key, value]) => (
@@ -836,8 +846,6 @@ export default function Dashboard({ data, onReset }) {
                   </div>
                 ))}
               </div>
-
-              {/* JSON View */}
               <div className="mt-6">
                 <h4 className="text-sm font-semibold text-gray-700 mb-2">
                   Raw JSON
@@ -847,8 +855,6 @@ export default function Dashboard({ data, onReset }) {
                 </pre>
               </div>
             </div>
-
-            {/* Modal Footer */}
             <div className="bg-gray-50 px-6 py-4 flex justify-end gap-3 border-t border-gray-200">
               <button
                 onClick={() => {

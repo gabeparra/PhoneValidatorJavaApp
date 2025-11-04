@@ -233,26 +233,41 @@ public class PhoneNumberValidator {
                 }
 
                 if (isValid && validPhoneNumber != null) {
-                    // Valid number - extract all information
                     String countryCode = "+" + validPhoneNumber.getCountryCode();
                     String regionCode = phoneUtil.getRegionCodeForNumber(validPhoneNumber);
                     String numberType = phoneUtil.getNumberType(validPhoneNumber).toString();
 
-                    validNumbers.add(new ValidPhoneRecord(
-                            record.getRowNumber(),
-                            record.getId(),
-                            record.getEmail(),
-                            record.getName(),
-                            originalPhoneNumber, // USE ORIGINAL HERE
-                            phoneUtil.format(validPhoneNumber, PhoneNumberFormat.E164),
-                            phoneUtil.format(validPhoneNumber, PhoneNumberFormat.INTERNATIONAL),
-                            phoneUtil.format(validPhoneNumber, PhoneNumberFormat.NATIONAL),
-                            countryCode,
-                            regionCode != null ? regionCode : "Unknown",
-                            numberType,
-                            record.getPlatform(),
-                            validationMethod,
-                            countryHint));
+                    // If it only validated through forceful testing, mark as invalid
+                    if ("forceful".equals(validationMethod)) {
+                        invalidNumbers.add(new InvalidPhoneRecord(
+                                record.getRowNumber(),
+                                record.getId(),
+                                record.getEmail(),
+                                record.getName(),
+                                originalPhoneNumber,
+                                String.format("Only validated through forceful testing as %s %s - data quality issue",
+                                        regionCode,
+                                        phoneUtil.format(validPhoneNumber, PhoneNumberFormat.E164)),
+                                record.getPlatform(),
+                                countryHint));
+                    } else {
+                        // Valid number through normal validation
+                        validNumbers.add(new ValidPhoneRecord(
+                                record.getRowNumber(),
+                                record.getId(),
+                                record.getEmail(),
+                                record.getName(),
+                                originalPhoneNumber,
+                                phoneUtil.format(validPhoneNumber, PhoneNumberFormat.E164),
+                                phoneUtil.format(validPhoneNumber, PhoneNumberFormat.INTERNATIONAL),
+                                phoneUtil.format(validPhoneNumber, PhoneNumberFormat.NATIONAL),
+                                countryCode,
+                                regionCode != null ? regionCode : "Unknown",
+                                numberType,
+                                record.getPlatform(),
+                                validationMethod,
+                                countryHint));
+                    }
                 } else {
                     // Invalid for all attempted methods
                     String errorMsg = detectedRegion != null
@@ -264,7 +279,7 @@ public class PhoneNumberValidator {
                             record.getId(),
                             record.getEmail(),
                             record.getName(),
-                            originalPhoneNumber, // USE ORIGINAL HERE TOO
+                            originalPhoneNumber,
                             errorMsg,
                             record.getPlatform(),
                             countryHint));
@@ -277,7 +292,7 @@ public class PhoneNumberValidator {
                         record.getId(),
                         record.getEmail(),
                         record.getName(),
-                        phoneNumberStr, // Original
+                        phoneNumberStr,
                         "Unexpected error: " + e.getMessage(),
                         record.getPlatform(),
                         countryHint));
