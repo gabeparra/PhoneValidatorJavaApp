@@ -1,12 +1,17 @@
 'use client';
 
 import { useState } from 'react';
+import {
+  FILE_CONFIG,
+  MANUAL_TEST_COUNTRIES,
+  DEFAULTS,
+} from '../utils/constants';
 
 export default function FileUpload({ onFileUpload, loading, error }) {
   const [selectedFile, setSelectedFile] = useState(null);
   const [dragActive, setDragActive] = useState(false);
   const [manualNumber, setManualNumber] = useState('');
-  const [manualCountry, setManualCountry] = useState('US');
+  const [manualCountry, setManualCountry] = useState(DEFAULTS.MANUAL_TEST_COUNTRY);
   const [showManualInput, setShowManualInput] = useState(false);
 
   const handleDrag = (e) => {
@@ -56,6 +61,15 @@ export default function FileUpload({ onFileUpload, loading, error }) {
     setShowManualInput(false);
   };
 
+  // Generate accept attribute from FILE_CONFIG
+  const acceptedExtensions = FILE_CONFIG.ACCEPTED_EXTENSIONS.join(',');
+
+  // Generate file description text
+  const fileDescription = FILE_CONFIG.ACCEPTED_EXTENSIONS
+    .map(ext => FILE_CONFIG.DISPLAY_NAMES[ext] || ext.substring(1))
+    .filter((value, index, self) => self.indexOf(value) === index) // Remove duplicates
+    .join(', ') + ' files only';
+
   return (
     <div className="max-w-2xl mx-auto space-y-6">
       {/* File Upload */}
@@ -99,7 +113,7 @@ export default function FileUpload({ onFileUpload, loading, error }) {
               name="file-upload"
               type="file"
               className="sr-only"
-              accept=".csv,.xlsx,.xls,.sql"
+              accept={acceptedExtensions}
               onChange={handleChange}
               disabled={loading}
             />
@@ -107,7 +121,7 @@ export default function FileUpload({ onFileUpload, loading, error }) {
           </div>
 
           <p className="text-sm text-gray-500">
-            CSV, Excel (.xlsx, .xls), or SQL files only
+            {fileDescription}
           </p>
         </div>
 
@@ -215,7 +229,7 @@ export default function FileUpload({ onFileUpload, loading, error }) {
                 type="text"
                 value={manualNumber}
                 onChange={(e) => setManualNumber(e.target.value)}
-                placeholder="e.g., +1234567890 or 1234567890"
+                placeholder={DEFAULTS.PLACEHOLDER_TEXT.PHONE_NUMBER}
                 className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-yellow-400 focus:border-transparent focus:outline-none"
                 onKeyPress={(e) => e.key === 'Enter' && handleTestNumber()}
                 disabled={loading}
@@ -235,16 +249,14 @@ export default function FileUpload({ onFileUpload, loading, error }) {
                 className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-yellow-400 focus:border-transparent focus:outline-none"
                 disabled={loading}
               >
-                <option value="US">United States (+1)</option>
-                <option value="BR">Brazil (+55)</option>
-                <option value="MX">Mexico (+52)</option>
-                <option value="CO">Colombia (+57)</option>
-                <option value="CR">Costa Rica (+506)</option>
-                <option value="ES">Spain (+34)</option>
-                <option value="CA">Canada (+1)</option>
+                {MANUAL_TEST_COUNTRIES.map(country => (
+                  <option key={country.code} value={country.code}>
+                    {country.name} ({country.dialCode})
+                  </option>
+                ))}
               </select>
               <p className="text-xs text-gray-600 mt-1">
-                Used if country code not detected in number
+                {DEFAULTS.PLACEHOLDER_TEXT.COUNTRY_FALLBACK}
               </p>
             </div>
 

@@ -1,18 +1,21 @@
-'use client';
+"use client";
 
-import { useState } from 'react';
-import axios from 'axios';
-import FileUpload from './components/FileUpload';
-import Dashboard from './components/Dashboard';
-
-const API_URL = process.env.REACT_APP_API_URL || 'http://localhost:8000';
+import { useState } from "react";
+import axios from "axios";
+import FileUpload from "./components/FileUpload";
+import Dashboard from "./components/Dashboard";
+import { getApiUrl, API_CONFIG } from "./utils/constants";
 
 export default function Home() {
   const [validationData, setValidationData] = useState(null);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
 
-  const handleFileUpload = async (file, manualNumber = null, country = null) => {
+  const handleFileUpload = async (
+    file,
+    manualNumber = null,
+    country = null
+  ) => {
     setLoading(true);
     setError(null);
 
@@ -23,21 +26,21 @@ export default function Home() {
         const tempFileData = [
           {
             rowNumber: 1,
-            id: 'manual-test',
-            email: '',
-            name: 'Manual Test',
+            id: "manual-test",
+            email: "",
+            name: "Manual Test",
             originalPhoneNumber: manualNumber,
-            country: country
-          }
+            country: country,
+          },
         ];
 
         response = await axios.post(
-          `${API_URL}/validate-phones-manual`,
+          getApiUrl(API_CONFIG.ENDPOINTS.VALIDATE_PHONES_MANUAL),
           {
             phone: manualNumber,
-            country: country
+            country: country,
           },
-          { headers: { 'Content-Type': 'application/json' } }
+          { headers: { "Content-Type": "application/json" } }
         );
 
         response.data.manualTest = {
@@ -45,22 +48,24 @@ export default function Home() {
           valid: response.data.valid_count > 0,
           ...(response.data.valid_count > 0
             ? response.data.valid_numbers?.[0]
-            : response.data.invalid_numbers?.[0])
+            : response.data.invalid_numbers?.[0]),
         };
       } else {
         const formData = new FormData();
-        formData.append('file', file);
+        formData.append("file", file);
 
         response = await axios.post(
-          `${API_URL}/validate-phones`,
+          getApiUrl(API_CONFIG.ENDPOINTS.VALIDATE_PHONES),
           formData,
-          { headers: { 'Content-Type': 'multipart/form-data' } }
+          { headers: { "Content-Type": "multipart/form-data" } }
         );
       }
 
       setValidationData(response.data);
     } catch (err) {
-      setError(err.response?.data?.detail || err.message || 'Validation failed');
+      setError(
+        err.response?.data?.detail || err.message || "Validation failed"
+      );
     } finally {
       setLoading(false);
     }
@@ -72,7 +77,7 @@ export default function Home() {
   };
 
   return (
-    <div className="min-h-screen bg-white py-12 px-4 sm:px-6 lg:px-8">
+    <div className="bg-white py-8 px-4 sm:px-6 lg:px-8">
       <div className="max-w-7xl mx-auto">
         {/* Yellow accent line */}
         <div className="h-1 bg-yellow-400 w-full mb-12"></div>
@@ -82,7 +87,8 @@ export default function Home() {
             Phone Number Validator
           </h1>
           <p className="text-lg text-gray-700">
-            Upload your CSV, Excel, or SQL file to validate and format phone numbers
+            Upload your CSV, Excel, or SQL file to validate and format phone
+            numbers
           </p>
         </div>
 
@@ -93,10 +99,7 @@ export default function Home() {
             error={error}
           />
         ) : (
-          <Dashboard
-            data={validationData}
-            onReset={handleReset}
-          />
+          <Dashboard data={validationData} onReset={handleReset} />
         )}
       </div>
     </div>

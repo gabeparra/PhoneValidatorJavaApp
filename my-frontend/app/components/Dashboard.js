@@ -1,12 +1,27 @@
-'use client';
+"use client";
 
-import { useState } from 'react';
-import axios from 'axios';
+import { useState } from "react";
+import axios from "axios";
+import {
+  COUNTRY_NAMES,
+  getCountryName,
+  getValidationMethodDisplay,
+  getApiUrl,
+  API_CONFIG,
+  DOWNLOAD_FILENAMES,
+  generateDownloadFilename,
+  TABS,
+  VALIDATION_METHOD_FILTERS,
+  MANUAL_TEST_COUNTRIES,
+  DEFAULTS,
+} from "../utils/constants";
 
 export default function Dashboard({ data, onReset }) {
-  const [activeTab, setActiveTab] = useState('overview');
-  const [searchTerm, setSearchTerm] = useState('');
-  const [validationMethodFilter, setValidationMethodFilter] = useState('all');
+  const [activeTab, setActiveTab] = useState(TABS.OVERVIEW);
+  const [searchTerm, setSearchTerm] = useState("");
+  const [validationMethodFilter, setValidationMethodFilter] = useState(
+    VALIDATION_METHOD_FILTERS.ALL
+  );
   const [manualTestResult, setManualTestResult] = useState(null);
   const [testLoading, setTestLoading] = useState(false);
   const [selectedNumber, setSelectedNumber] = useState(null);
@@ -14,10 +29,10 @@ export default function Dashboard({ data, onReset }) {
 
   const downloadJSON = (dataArray, filename) => {
     const blob = new Blob([JSON.stringify(dataArray, null, 2)], {
-      type: 'application/json',
+      type: "application/json",
     });
     const url = URL.createObjectURL(blob);
-    const a = document.createElement('a');
+    const a = document.createElement("a");
     a.href = url;
     a.download = filename;
     a.click();
@@ -29,18 +44,20 @@ export default function Dashboard({ data, onReset }) {
 
     const headers = Object.keys(dataArray[0]);
     const csvContent = [
-      headers.join(','),
-      ...dataArray.map(row =>
-        headers.map(header => {
-          const value = row[header] || '';
-          return `"${String(value).replace(/"/g, '""')}"`;
-        }).join(',')
+      headers.join(","),
+      ...dataArray.map((row) =>
+        headers
+          .map((header) => {
+            const value = row[header] || "";
+            return `"${String(value).replace(/"/g, '""')}"`;
+          })
+          .join(",")
       ),
-    ].join('\n');
+    ].join("\n");
 
-    const blob = new Blob([csvContent], { type: 'text/csv' });
+    const blob = new Blob([csvContent], { type: "text/csv" });
     const url = URL.createObjectURL(blob);
-    const a = document.createElement('a');
+    const a = document.createElement("a");
     a.href = url;
     a.download = filename;
     a.click();
@@ -52,7 +69,7 @@ export default function Dashboard({ data, onReset }) {
 
     const term = searchTerm.toLowerCase();
     return numbers.filter(
-      num =>
+      (num) =>
         num.originalPhoneNumber?.toLowerCase().includes(term) ||
         num.e164?.toLowerCase().includes(term) ||
         num.email?.toLowerCase().includes(term) ||
@@ -61,8 +78,11 @@ export default function Dashboard({ data, onReset }) {
   };
 
   const filterByValidationMethod = (numbers) => {
-    if (validationMethodFilter === 'all') return numbers;
-    return numbers.filter(num => num.validationMethod === validationMethodFilter);
+    if (validationMethodFilter === VALIDATION_METHOD_FILTERS.ALL)
+      return numbers;
+    return numbers.filter(
+      (num) => num.validationMethod === validationMethodFilter
+    );
   };
 
   const handleViewDetails = (number) => {
@@ -75,40 +95,65 @@ export default function Dashboard({ data, onReset }) {
     <div className="space-y-3">
       <div className="bg-white rounded p-3 border border-gray-200">
         <p className="text-sm text-gray-700">
-          <strong>Input:</strong> <span className="font-mono">{result.input}</span>
+          <strong>Input:</strong>{" "}
+          <span className="font-mono">{result.input}</span>
         </p>
       </div>
 
       {result.valid ? (
         <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
           <div className="bg-white rounded p-3 border border-green-200">
-            <p className="text-xs text-gray-600 uppercase tracking-wide font-semibold">E.164 Format</p>
-            <p className="text-sm font-mono text-gray-900 mt-1">{result.e164}</p>
+            <p className="text-xs text-gray-600 uppercase tracking-wide font-semibold">
+              E.164 Format
+            </p>
+            <p className="text-sm font-mono text-gray-900 mt-1">
+              {result.e164}
+            </p>
           </div>
 
           <div className="bg-white rounded p-3 border border-green-200">
-            <p className="text-xs text-gray-600 uppercase tracking-wide font-semibold">International Format</p>
-            <p className="text-sm font-mono text-gray-900 mt-1">{result.international}</p>
+            <p className="text-xs text-gray-600 uppercase tracking-wide font-semibold">
+              International Format
+            </p>
+            <p className="text-sm font-mono text-gray-900 mt-1">
+              {result.international}
+            </p>
           </div>
 
           <div className="bg-white rounded p-3 border border-green-200">
-            <p className="text-xs text-gray-600 uppercase tracking-wide font-semibold">National Format</p>
-            <p className="text-sm font-mono text-gray-900 mt-1">{result.national}</p>
+            <p className="text-xs text-gray-600 uppercase tracking-wide font-semibold">
+              National Format
+            </p>
+            <p className="text-sm font-mono text-gray-900 mt-1">
+              {result.national}
+            </p>
           </div>
 
           <div className="bg-white rounded p-3 border border-green-200">
-            <p className="text-xs text-gray-600 uppercase tracking-wide font-semibold">Country Code</p>
-            <p className="text-sm font-mono text-gray-900 mt-1">{result.countryCode}</p>
+            <p className="text-xs text-gray-600 uppercase tracking-wide font-semibold">
+              Country Code
+            </p>
+            <p className="text-sm font-mono text-gray-900 mt-1">
+              {result.countryCode}
+            </p>
           </div>
 
           <div className="bg-white rounded p-3 border border-green-200">
-            <p className="text-xs text-gray-600 uppercase tracking-wide font-semibold">Region/Country</p>
-            <p className="text-sm font-mono text-gray-900 mt-1">{result.region}</p>
+            <p className="text-xs text-gray-600 uppercase tracking-wide font-semibold">
+              Region/Country
+            </p>
+            <p className="text-sm font-mono text-gray-900 mt-1">
+              {result.region}
+            </p>
           </div>
 
           <div className="bg-white rounded p-3 border border-green-200">
-            <p className="text-xs text-gray-600 uppercase tracking-wide font-semibold">Phone Type</p>
-            <p className="text-sm font-mono text-gray-900 mt-1">{result.type}</p>
+            <p className="text-xs text-gray-600 uppercase tracking-wide font-semibold">
+              Phone Type
+            </p>
+            <p className="text-sm font-mono text-gray-900 mt-1">
+              {result.type}
+            </p>
           </div>
         </div>
       ) : (
@@ -123,11 +168,11 @@ export default function Dashboard({ data, onReset }) {
 
   // Function to test a phone number
   const handleTestPhone = async () => {
-    const phoneInput = document.getElementById('manualTestInput')?.value;
-    const countryInput = document.getElementById('manualTestCountry')?.value;
+    const phoneInput = document.getElementById("manualTestInput")?.value;
+    const countryInput = document.getElementById("manualTestCountry")?.value;
 
     if (!phoneInput || !phoneInput.trim()) {
-      alert('Please enter a phone number');
+      alert("Please enter a phone number");
       return;
     }
 
@@ -135,12 +180,12 @@ export default function Dashboard({ data, onReset }) {
 
     try {
       const response = await axios.post(
-        `${process.env.REACT_APP_API_URL || 'http://localhost:8000'}/validate-phones-manual`,
+        getApiUrl(API_CONFIG.ENDPOINTS.VALIDATE_PHONES_MANUAL),
         {
           phone: phoneInput.trim(),
-          country: countryInput
+          country: countryInput,
         },
-        { headers: { 'Content-Type': 'application/json' } }
+        { headers: { "Content-Type": "application/json" } }
       );
 
       // Extract result from response
@@ -149,27 +194,32 @@ export default function Dashboard({ data, onReset }) {
         valid: response.data.valid_count > 0,
         ...(response.data.valid_count > 0
           ? response.data.valid_numbers?.[0]
-          : response.data.invalid_numbers?.[0])
+          : response.data.invalid_numbers?.[0]),
       };
 
       setManualTestResult(testResult);
-      document.getElementById('manualTestInput').value = '';
+      document.getElementById("manualTestInput").value = "";
     } catch (error) {
-      alert('Error testing number: ' + (error.response?.data?.detail || error.message));
+      alert(
+        "Error testing number: " +
+          (error.response?.data?.detail || error.message)
+      );
     } finally {
       setTestLoading(false);
     }
   };
 
-  const validFiltered = filterByValidationMethod(filterNumbers(data.valid_numbers));
+  const validFiltered = filterByValidationMethod(
+    filterNumbers(data.valid_numbers)
+  );
   const invalidFiltered = filterNumbers(data.invalid_numbers);
 
   // Build tabs array - include manual test tab
   const tabs = [
-    { id: 'overview', label: 'Overview' },
-    { id: 'valid', label: `Valid (${data.valid_count})` },
-    { id: 'invalid', label: `Invalid (${data.invalid_count})` },
-    { id: 'manual', label: '🔢 Manual Test' },
+    { id: TABS.OVERVIEW, label: "Overview" },
+    { id: TABS.VALID, label: `Valid (${data.valid_count})` },
+    { id: TABS.INVALID, label: `Invalid (${data.invalid_count})` },
+    { id: TABS.MANUAL, label: "🔢 Manual Test" },
   ];
 
   return (
@@ -195,7 +245,9 @@ export default function Dashboard({ data, onReset }) {
         <div className="grid grid-cols-1 md:grid-cols-4 gap-4 mt-6">
           <div className="bg-gray-900 rounded-lg p-4 border-l-4 border-yellow-400">
             <p className="text-gray-400 text-sm">Total Numbers</p>
-            <p className="text-3xl font-bold mt-1 text-white">{data.total_numbers}</p>
+            <p className="text-3xl font-bold mt-1 text-white">
+              {data.total_numbers}
+            </p>
           </div>
           <div className="bg-gray-900 rounded-lg p-4 border-l-4 border-yellow-400">
             <p className="text-gray-400 text-sm">Valid Numbers</p>
@@ -211,7 +263,9 @@ export default function Dashboard({ data, onReset }) {
           </div>
           <div className="bg-gray-900 rounded-lg p-4 border-l-4 border-yellow-400">
             <p className="text-gray-400 text-sm">Success Rate</p>
-            <p className="text-3xl font-bold mt-1 text-yellow-400">{data.success_rate.toFixed(1)}%</p>
+            <p className="text-3xl font-bold mt-1 text-yellow-400">
+              {data.success_rate.toFixed(1)}%
+            </p>
           </div>
         </div>
       </div>
@@ -219,14 +273,15 @@ export default function Dashboard({ data, onReset }) {
       {/* Tabs */}
       <div className="border-b border-gray-200">
         <nav className="flex -mb-px flex-wrap">
-          {tabs.map(tab => (
+          {tabs.map((tab) => (
             <button
               key={tab.id}
               onClick={() => setActiveTab(tab.id)}
-              className={`px-6 py-4 text-sm font-medium border-b-2 transition-colors whitespace-nowrap ${activeTab === tab.id
-                ? 'border-yellow-400 text-yellow-600'
-                : 'border-transparent text-gray-700 hover:text-gray-900 hover:border-gray-300'
-                }`}
+              className={`px-6 py-4 text-sm font-medium border-b-2 transition-colors whitespace-nowrap ${
+                activeTab === tab.id
+                  ? "border-yellow-400 text-yellow-600"
+                  : "border-transparent text-gray-700 hover:text-gray-900 hover:border-gray-300"
+              }`}
             >
               {tab.label}
             </button>
@@ -236,77 +291,55 @@ export default function Dashboard({ data, onReset }) {
 
       {/* Content */}
       <div className="p-6">
-        {activeTab === 'overview' && (
+        {activeTab === TABS.OVERVIEW && (
           <div className="space-y-6">
             <div>
-              <h3 className="text-lg font-semibold mb-4 text-black">Country Breakdown</h3>
-              {(() => {
-                const countryNames = {
-                  'US': 'United States',
-                  'BR': 'Brazil',
-                  'MX': 'Mexico',
-                  'CO': 'Colombia',
-                  'CR': 'Costa Rica',
-                  'ES': 'Spain',
-                  'CA': 'Canada',
-                  'AR': 'Argentina',
-                  'BD': 'Bangladesh',
-                  'CL': 'Chile',
-                  'CN': 'China',
-                  'EC': 'Ecuador',
-                  'EG': 'Egypt',
-                  'SV': 'El Salvador',
-                  'HN': 'Honduras',
-                  'IN': 'India',
-                  'IL': 'Israel',
-                  'KZ': 'Kazakhstan',
-                  'KG': 'Kyrgyzstan',
-                  'MA': 'Morocco',
-                  'NP': 'Nepal',
-                  'NG': 'Nigeria',
-                  'PK': 'Pakistan',
-                  'PE': 'Peru',
-                  'RU': 'Russia',
-                  'SA': 'Saudi Arabia',
-                  'TR': 'Turkey',
-                  'UZ': 'Uzbekistan',
-                  'VE': 'Venezuela',
-                  'VN': 'Vietnam',
-                  'ZM': 'Zambia'
-                };
-
-                return (
-                  <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
-                    {Object.entries(data.country_breakdown).map(([country, count]) => (
-                      <div
-                        key={country}
-                        className="bg-white rounded-lg p-6 shadow-md hover:shadow-lg transition-shadow border-4 border-yellow-400"
-                      >
-                        <p className="text-3xl font-bold text-black">{count}</p>
-                        <p className="text-sm font-semibold text-black mt-2">
-                          {countryNames[country] || country}
-                        </p>
-                      </div>
-                    ))}
-                  </div>
-                );
-              })()}
+              <h3 className="text-lg font-semibold mb-4 text-black">
+                Country Breakdown
+              </h3>
+              <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
+                {Object.entries(data.country_breakdown).map(
+                  ([country, count]) => (
+                    <div
+                      key={country}
+                      className="bg-white rounded-lg p-6 shadow-md hover:shadow-lg transition-shadow border-4 border-yellow-400"
+                    >
+                      <p className="text-3xl font-bold text-black">{count}</p>
+                      <p className="text-sm font-semibold text-black mt-2">
+                        {getCountryName(country)}
+                      </p>
+                    </div>
+                  )
+                )}
+              </div>
             </div>
 
             <div>
-              <h3 className="text-lg font-semibold mb-4 text-black">Download Options</h3>
+              <h3 className="text-lg font-semibold mb-4 text-black">
+                Download Options
+              </h3>
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <div className="border border-gray-200 rounded-lg p-4">
                   <h4 className="font-medium mb-2 text-black">Valid Numbers</h4>
                   <div className="flex gap-2">
                     <button
-                      onClick={() => downloadJSON(data.valid_numbers, 'valid_numbers.json')}
+                      onClick={() =>
+                        downloadJSON(
+                          data.valid_numbers,
+                          generateDownloadFilename("valid_numbers", ".json")
+                        )
+                      }
                       className="flex-1 bg-green-600 text-white px-4 py-2 rounded hover:bg-green-700 transition-colors"
                     >
                       Download JSON
                     </button>
                     <button
-                      onClick={() => downloadCSV(data.valid_numbers, 'valid_numbers.csv')}
+                      onClick={() =>
+                        downloadCSV(
+                          data.valid_numbers,
+                          generateDownloadFilename("valid_numbers", ".csv")
+                        )
+                      }
                       className="flex-1 bg-green-600 text-white px-4 py-2 rounded hover:bg-green-700 transition-colors"
                     >
                       Download CSV
@@ -314,16 +347,28 @@ export default function Dashboard({ data, onReset }) {
                   </div>
                 </div>
                 <div className="border border-gray-200 rounded-lg p-4">
-                  <h4 className="font-medium mb-2 text-black">Invalid Numbers</h4>
+                  <h4 className="font-medium mb-2 text-black">
+                    Invalid Numbers
+                  </h4>
                   <div className="flex gap-2">
                     <button
-                      onClick={() => downloadJSON(data.invalid_numbers, 'invalid_numbers.json')}
+                      onClick={() =>
+                        downloadJSON(
+                          data.invalid_numbers,
+                          generateDownloadFilename("invalid_numbers", ".json")
+                        )
+                      }
                       className="flex-1 bg-red-600 text-white px-4 py-2 rounded hover:bg-red-700 transition-colors"
                     >
                       Download JSON
                     </button>
                     <button
-                      onClick={() => downloadCSV(data.invalid_numbers, 'invalid_numbers.csv')}
+                      onClick={() =>
+                        downloadCSV(
+                          data.invalid_numbers,
+                          generateDownloadFilename("invalid_numbers", ".csv")
+                        )
+                      }
                       className="flex-1 bg-red-600 text-white px-4 py-2 rounded hover:bg-red-700 transition-colors"
                     >
                       Download CSV
@@ -335,7 +380,7 @@ export default function Dashboard({ data, onReset }) {
           </div>
         )}
 
-        {(activeTab === 'valid' || activeTab === 'invalid') && (
+        {(activeTab === TABS.VALID || activeTab === TABS.INVALID) && (
           <div>
             <div className="mb-4">
               <input
@@ -348,43 +393,111 @@ export default function Dashboard({ data, onReset }) {
             </div>
 
             {/* Validation Method Filter - Only show for valid numbers */}
-            {activeTab === 'valid' && (
+            {activeTab === TABS.VALID && (
               <div className="mb-4 flex gap-2 flex-wrap">
                 <button
-                  onClick={() => setValidationMethodFilter('all')}
-                  className={`px-4 py-2 rounded-lg font-medium transition-colors ${validationMethodFilter === 'all'
-                    ? 'bg-yellow-400 text-black'
-                    : 'bg-gray-200 text-gray-800 hover:bg-gray-300'
-                    }`}
+                  onClick={() =>
+                    setValidationMethodFilter(VALIDATION_METHOD_FILTERS.ALL)
+                  }
+                  className={`px-4 py-2 rounded-lg text-sm font-medium transition-colors ${
+                    validationMethodFilter === VALIDATION_METHOD_FILTERS.ALL
+                      ? "bg-yellow-400 text-black"
+                      : "bg-gray-200 text-gray-800 hover:bg-gray-300"
+                  }`}
                 >
                   All ({data.valid_numbers.length})
                 </button>
                 <button
-                  onClick={() => setValidationMethodFilter('original')}
-                  className={`px-4 py-2 rounded-lg font-medium transition-colors ${validationMethodFilter === 'original'
-                    ? 'bg-yellow-400 text-black'
-                    : 'bg-gray-200 text-gray-800 hover:bg-gray-300'
-                    }`}
+                  onClick={() =>
+                    setValidationMethodFilter(
+                      VALIDATION_METHOD_FILTERS.ORIGINAL
+                    )
+                  }
+                  className={`px-4 py-2 rounded-lg text-sm font-medium transition-colors ${
+                    validationMethodFilter ===
+                    VALIDATION_METHOD_FILTERS.ORIGINAL
+                      ? "bg-yellow-400 text-black"
+                      : "bg-gray-200 text-gray-800 hover:bg-gray-300"
+                  }`}
                 >
-                  Original Format ({data.valid_numbers.filter(n => n.validationMethod === 'original').length})
+                  Original Format (
+                  {
+                    data.valid_numbers.filter(
+                      (n) =>
+                        n.validationMethod ===
+                        VALIDATION_METHOD_FILTERS.ORIGINAL
+                    ).length
+                  }
+                  )
                 </button>
                 <button
-                  onClick={() => setValidationMethodFilter('country_code')}
-                  className={`px-4 py-2 rounded-lg font-medium transition-colors ${validationMethodFilter === 'country_code'
-                    ? 'bg-yellow-400 text-black'
-                    : 'bg-gray-200 text-gray-800 hover:bg-gray-300'
-                    }`}
+                  onClick={() =>
+                    setValidationMethodFilter(
+                      VALIDATION_METHOD_FILTERS.COUNTRY_CODE
+                    )
+                  }
+                  className={`px-4 py-2 rounded-lg text-sm font-medium transition-colors ${
+                    validationMethodFilter ===
+                    VALIDATION_METHOD_FILTERS.COUNTRY_CODE
+                      ? "bg-yellow-400 text-black"
+                      : "bg-gray-200 text-gray-800 hover:bg-gray-300"
+                  }`}
                 >
-                  Country Code ({data.valid_numbers.filter(n => n.validationMethod === 'country_code').length})
+                  Country from form (
+                  {
+                    data.valid_numbers.filter(
+                      (n) =>
+                        n.validationMethod ===
+                        VALIDATION_METHOD_FILTERS.COUNTRY_CODE
+                    ).length
+                  }
+                  )
                 </button>
                 <button
-                  onClick={() => setValidationMethodFilter('us_fallback')}
-                  className={`px-4 py-2 rounded-lg font-medium transition-colors ${validationMethodFilter === 'us_fallback'
-                    ? 'bg-yellow-400 text-black'
-                    : 'bg-gray-200 text-gray-800 hover:bg-gray-300'
-                    }`}
+                  onClick={() =>
+                    setValidationMethodFilter(
+                      VALIDATION_METHOD_FILTERS.US_FALLBACK
+                    )
+                  }
+                  className={`px-4 py-2 rounded-lg text-sm font-medium transition-colors ${
+                    validationMethodFilter ===
+                    VALIDATION_METHOD_FILTERS.US_FALLBACK
+                      ? "bg-yellow-400 text-black"
+                      : "bg-gray-200 text-gray-800 hover:bg-gray-300"
+                  }`}
                 >
-                  US +1 Fallback ({data.valid_numbers.filter(n => n.validationMethod === 'us_fallback').length})
+                  US +1 Fallback (
+                  {
+                    data.valid_numbers.filter(
+                      (n) =>
+                        n.validationMethod ===
+                        VALIDATION_METHOD_FILTERS.US_FALLBACK
+                    ).length
+                  }
+                  )
+                </button>
+                <button
+                  onClick={() =>
+                    setValidationMethodFilter(
+                      VALIDATION_METHOD_FILTERS.FORCEFUL
+                    )
+                  }
+                  className={`px-4 py-2 rounded-lg text-sm font-medium transition-colors ${
+                    validationMethodFilter ===
+                    VALIDATION_METHOD_FILTERS.FORCEFUL
+                      ? "bg-yellow-400 text-black"
+                      : "bg-gray-200 text-gray-800 hover:bg-gray-300"
+                  }`}
+                >
+                  Forceful Test (
+                  {
+                    data.valid_numbers.filter(
+                      (n) =>
+                        n.validationMethod ===
+                        VALIDATION_METHOD_FILTERS.FORCEFUL
+                    ).length
+                  }
+                  )
                 </button>
               </div>
             )}
@@ -399,13 +512,16 @@ export default function Dashboard({ data, onReset }) {
                     <th className="px-4 py-3 text-left text-xs font-medium text-gray-700 uppercase">
                       Original Number
                     </th>
-                    {activeTab === 'valid' ? (
+                    {activeTab === TABS.VALID ? (
                       <>
                         <th className="px-4 py-3 text-left text-xs font-medium text-gray-700 uppercase">
-                          E164 Format
+                          Name
                         </th>
                         <th className="px-4 py-3 text-left text-xs font-medium text-gray-700 uppercase">
-                          Country
+                          Country from Form
+                        </th>
+                        <th className="px-4 py-3 text-left text-xs font-medium text-gray-700 uppercase">
+                          Validated Country
                         </th>
                         <th className="px-4 py-3 text-left text-xs font-medium text-gray-700 uppercase">
                           Type
@@ -433,66 +549,105 @@ export default function Dashboard({ data, onReset }) {
                   </tr>
                 </thead>
                 <tbody className="bg-white divide-y divide-gray-200">
-                  {(activeTab === 'valid' ? validFiltered : invalidFiltered).map(
-                    (number, idx) => (
-                      <tr key={idx} className="hover:bg-gray-50">
-                        <td className="px-4 py-3 text-sm text-gray-900">
-                          {number.rowNumber}
-                        </td>
-                        <td className="px-4 py-3 text-sm text-gray-900 font-mono">
-                          {number.originalPhoneNumber}
-                        </td>
-                        {activeTab === 'valid' ? (
-                          <>
-                            <td className="px-4 py-3 text-sm text-gray-900 font-mono">
-                              {number.e164}
-                            </td>
-                            <td className="px-4 py-3 text-sm text-gray-900">
-                              {number.region}
-                            </td>
-                            <td className="px-4 py-3 text-sm">
-                              <span className="px-2 py-1 text-xs font-medium rounded-full bg-blue-100 text-blue-800">
-                                {number.type}
+                  {(activeTab === TABS.VALID
+                    ? validFiltered
+                    : invalidFiltered
+                  ).map((number, idx) => (
+                    <tr key={idx} className="hover:bg-gray-50">
+                      <td className="px-4 py-3 text-sm text-gray-900">
+                        {number.rowNumber}
+                      </td>
+                      <td className="px-4 py-3 text-sm text-gray-900 font-mono">
+                        {number.originalPhoneNumber}
+                      </td>
+                      {activeTab === TABS.VALID ? (
+                        <>
+                          <td className="px-4 py-3 text-sm text-gray-900">
+                            {number.name || "—"}
+                          </td>
+                          <td className="px-4 py-3 text-sm text-gray-900">
+                            {number.originalCountry ? (
+                              <span className="px-2 py-1 text-xs font-medium rounded bg-gray-100 text-gray-700 whitespace-nowrap inline-block">
+                                {number.originalCountry}
                               </span>
-                            </td>
-                            <td className="px-4 py-3 text-sm">
-                              <span className={`px-2 py-1 text-xs font-medium rounded-full ${number.validationMethod === 'original' ? 'bg-green-100 text-green-800' :
-                                number.validationMethod === 'country_code' ? 'bg-blue-100 text-blue-800' :
-                                  number.validationMethod === 'us_fallback' ? 'bg-amber-100 text-amber-800' :
-                                    'bg-gray-100 text-gray-800'
-                                }`}>
-                                {number.validationMethod || 'Unknown'}
-                              </span>
-                            </td>
-                          </>
-                        ) : (
-                          <>
-                            <td className="px-4 py-3 text-sm text-red-600">
-                              {number.error}
-                            </td>
-                            <td className="px-4 py-3 text-sm text-gray-900">
-                              {number.name}
-                            </td>
-                          </>
-                        )}
-                        <td className="px-4 py-3 text-sm text-gray-600">
-                          {number.email}
-                        </td>
-                        <td className="px-4 py-3 text-sm">
-                          <button
-                            onClick={() => handleViewDetails(number)}
-                            className="text-yellow-600 hover:text-yellow-700 font-medium"
-                          >
-                            View
-                          </button>
-                        </td>
-                      </tr>
-                    )
-                  )}
+                            ) : (
+                              <span className="text-gray-400">—</span>
+                            )}
+                          </td>
+                          <td className="px-4 py-3 text-sm text-gray-900">
+                            <span
+                              className={`px-2 py-1 text-xs font-medium rounded whitespace-nowrap inline-block ${
+                                number.originalCountry &&
+                                number.originalCountry.toUpperCase() !==
+                                  (
+                                    number.region || number.countryCode
+                                  )?.toUpperCase()
+                                  ? "bg-yellow-100 text-yellow-800"
+                                  : "bg-green-100 text-green-800"
+                              }`}
+                            >
+                              {getCountryName(
+                                number.region || number.countryCode
+                              )}
+                            </span>
+                          </td>
+                          <td className="px-4 py-3 text-sm">
+                            <span className="px-2 py-1 text-xs font-medium rounded-full bg-blue-100 text-blue-800">
+                              {number.type}
+                            </span>
+                          </td>
+                          <td className="px-4 py-3 text-sm">
+                            <span
+                              className={`px-2 py-1 text-xs font-medium rounded-full whitespace-nowrap ${
+                                number.validationMethod ===
+                                VALIDATION_METHOD_FILTERS.ORIGINAL
+                                  ? "bg-green-100 text-green-800"
+                                  : number.validationMethod ===
+                                    VALIDATION_METHOD_FILTERS.COUNTRY_CODE
+                                  ? "bg-blue-100 text-blue-800"
+                                  : number.validationMethod ===
+                                    VALIDATION_METHOD_FILTERS.US_FALLBACK
+                                  ? "bg-amber-100 text-amber-800"
+                                  : number.validationMethod ===
+                                    VALIDATION_METHOD_FILTERS.FORCEFUL
+                                  ? "bg-purple-100 text-purple-800"
+                                  : "bg-gray-100 text-gray-800"
+                              }`}
+                            >
+                              {getValidationMethodDisplay(
+                                number.validationMethod
+                              )}
+                            </span>
+                          </td>
+                        </>
+                      ) : (
+                        <>
+                          <td className="px-4 py-3 text-sm text-red-600">
+                            {number.error}
+                          </td>
+                          <td className="px-4 py-3 text-sm text-gray-900">
+                            {number.name}
+                          </td>
+                        </>
+                      )}
+                      <td className="px-4 py-3 text-sm text-gray-600">
+                        {number.email}
+                      </td>
+                      <td className="px-4 py-3 text-sm">
+                        <button
+                          onClick={() => handleViewDetails(number)}
+                          className="text-yellow-600 hover:text-yellow-700 font-medium"
+                        >
+                          View
+                        </button>
+                      </td>
+                    </tr>
+                  ))}
                 </tbody>
               </table>
 
-              {(activeTab === 'valid' ? validFiltered : invalidFiltered).length === 0 && (
+              {(activeTab === TABS.VALID ? validFiltered : invalidFiltered)
+                .length === 0 && (
                 <div className="text-center py-12 text-gray-500">
                   No results found
                 </div>
@@ -502,11 +657,13 @@ export default function Dashboard({ data, onReset }) {
         )}
 
         {/* Manual Test Tab */}
-        {activeTab === 'manual' && (
+        {activeTab === TABS.MANUAL && (
           <div className="space-y-6">
             {/* Test Input Form */}
             <div className="bg-yellow-50 border-2 border-yellow-400 rounded-lg p-6">
-              <h3 className="text-lg font-semibold text-black mb-4">Test Another Number</h3>
+              <h3 className="text-lg font-semibold text-black mb-4">
+                Test Another Number
+              </h3>
 
               <div className="space-y-4">
                 <div>
@@ -516,11 +673,11 @@ export default function Dashboard({ data, onReset }) {
                   <input
                     type="text"
                     id="manualTestInput"
-                    placeholder="e.g., +1234567890 or 1234567890"
+                    placeholder={DEFAULTS.PLACEHOLDER_TEXT.PHONE_NUMBER}
                     defaultValue=""
                     className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-yellow-400 focus:border-transparent"
                     onKeyPress={(e) => {
-                      if (e.key === 'Enter' && !testLoading) {
+                      if (e.key === "Enter" && !testLoading) {
                         handleTestPhone();
                       }
                     }}
@@ -537,29 +694,31 @@ export default function Dashboard({ data, onReset }) {
                   </label>
                   <select
                     id="manualTestCountry"
-                    defaultValue="US"
+                    defaultValue={DEFAULTS.MANUAL_TEST_COUNTRY}
                     className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-yellow-400 focus:border-transparent"
                     disabled={testLoading}
                   >
-                    <option value="US">United States (+1)</option>
-                    <option value="BR">Brazil (+55)</option>
-                    <option value="MX">Mexico (+52)</option>
-                    <option value="CO">Colombia (+57)</option>
-                    <option value="CR">Costa Rica (+506)</option>
-                    <option value="ES">Spain (+34)</option>
-                    <option value="CA">Canada (+1)</option>
+                    {MANUAL_TEST_COUNTRIES.map((country) => (
+                      <option key={country.code} value={country.code}>
+                        {country.name} ({country.dialCode})
+                      </option>
+                    ))}
                   </select>
+                  <p className="text-xs text-gray-600 mt-1">
+                    {DEFAULTS.PLACEHOLDER_TEXT.COUNTRY_FALLBACK}
+                  </p>
                 </div>
 
                 <button
                   onClick={handleTestPhone}
                   disabled={testLoading}
-                  className={`w-full px-6 py-3 rounded-lg font-medium text-black transition-colors ${testLoading
-                    ? 'bg-gray-300 cursor-not-allowed'
-                    : 'bg-yellow-400 hover:bg-yellow-500'
-                    }`}
+                  className={`w-full px-6 py-3 rounded-lg font-medium text-black transition-colors ${
+                    testLoading
+                      ? "bg-gray-300 cursor-not-allowed"
+                      : "bg-yellow-400 hover:bg-yellow-500"
+                  }`}
                 >
-                  {testLoading ? 'Testing...' : 'Test This Number'}
+                  {testLoading ? "Testing..." : "Test This Number"}
                 </button>
               </div>
             </div>
@@ -568,21 +727,45 @@ export default function Dashboard({ data, onReset }) {
             {testLoading && (
               <div className="bg-yellow-50 border-2 border-yellow-400 rounded-lg p-6 text-center">
                 <div className="flex items-center justify-center gap-3">
-                  <svg className="animate-spin h-6 w-6 text-yellow-600" fill="none" viewBox="0 0 24 24">
-                    <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
-                    <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                  <svg
+                    className="animate-spin h-6 w-6 text-yellow-600"
+                    fill="none"
+                    viewBox="0 0 24 24"
+                  >
+                    <circle
+                      className="opacity-25"
+                      cx="12"
+                      cy="12"
+                      r="10"
+                      stroke="currentColor"
+                      strokeWidth="4"
+                    ></circle>
+                    <path
+                      className="opacity-75"
+                      fill="currentColor"
+                      d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"
+                    ></path>
                   </svg>
-                  <p className="text-yellow-700 font-medium">Testing number...</p>
+                  <p className="text-yellow-700 font-medium">
+                    Testing number...
+                  </p>
                 </div>
               </div>
             )}
 
             {/* Current Test Result */}
             {manualTestResult && !testLoading && (
-              <div className={`border-2 rounded-lg p-6 ${manualTestResult.valid ? 'bg-green-50 border-green-200' : 'bg-red-50 border-red-200'
-                }`}>
+              <div
+                className={`border-2 rounded-lg p-6 ${
+                  manualTestResult.valid
+                    ? "bg-green-50 border-green-200"
+                    : "bg-red-50 border-red-200"
+                }`}
+              >
                 <h4 className="text-lg font-semibold mb-4 text-black">
-                  {manualTestResult.valid ? '✅ Test Result - Valid' : '❌ Test Result - Invalid'}
+                  {manualTestResult.valid
+                    ? "✅ Test Result - Valid"
+                    : "❌ Test Result - Invalid"}
                 </h4>
                 <ManualTestResultDisplay result={manualTestResult} />
               </div>
@@ -591,7 +774,9 @@ export default function Dashboard({ data, onReset }) {
             {/* Original Test Result (if exists) */}
             {data.manualTest && (
               <div className="bg-blue-50 border-2 border-blue-200 rounded-lg p-6">
-                <h4 className="text-lg font-semibold text-blue-900 mb-4">Original Upload Test Result</h4>
+                <h4 className="text-lg font-semibold text-blue-900 mb-4">
+                  Original Upload Test Result
+                </h4>
                 <ManualTestResultDisplay result={data.manualTest} />
               </div>
             )}
@@ -606,7 +791,9 @@ export default function Dashboard({ data, onReset }) {
             {/* Modal Header */}
             <div className="bg-black px-6 py-4 text-white flex justify-between items-center border-b-4 border-yellow-400">
               <h3 className="text-xl font-bold">
-                {activeTab === 'valid' ? '✅ Valid Number Details' : '❌ Invalid Number Details'}
+                {activeTab === TABS.VALID
+                  ? "✅ Valid Number Details"
+                  : "❌ Invalid Number Details"}
               </h3>
               <button
                 onClick={() => {
@@ -623,15 +810,28 @@ export default function Dashboard({ data, onReset }) {
             <div className="p-6 overflow-y-auto flex-1">
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 {Object.entries(selectedNumber).map(([key, value]) => (
-                  <div key={key} className="bg-gray-50 rounded-lg p-4 border border-gray-200">
+                  <div
+                    key={key}
+                    className="bg-gray-50 rounded-lg p-4 border border-gray-200"
+                  >
                     <p className="text-xs text-gray-600 uppercase tracking-wide font-semibold mb-1">
-                      {key.replace(/([A-Z])/g, ' $1').trim()}
+                      {key.replace(/([A-Z])/g, " $1").trim()}
                     </p>
-                    <p className={`text-sm font-mono ${key === 'error' ? 'text-red-600' :
-                      key === 'originalPhoneNumber' || key === 'e164' || key === 'international' || key === 'national' ? 'text-yellow-600' :
-                        'text-gray-900'
-                      }`}>
-                      {value !== null && value !== undefined ? String(value) : '—'}
+                    <p
+                      className={`text-sm font-mono ${
+                        key === "error"
+                          ? "text-red-600"
+                          : key === "originalPhoneNumber" ||
+                            key === "e164" ||
+                            key === "international" ||
+                            key === "national"
+                          ? "text-yellow-600"
+                          : "text-gray-900"
+                      }`}
+                    >
+                      {value !== null && value !== undefined
+                        ? String(value)
+                        : "—"}
                     </p>
                   </div>
                 ))}
@@ -639,7 +839,9 @@ export default function Dashboard({ data, onReset }) {
 
               {/* JSON View */}
               <div className="mt-6">
-                <h4 className="text-sm font-semibold text-gray-700 mb-2">Raw JSON</h4>
+                <h4 className="text-sm font-semibold text-gray-700 mb-2">
+                  Raw JSON
+                </h4>
                 <pre className="bg-gray-900 text-green-400 p-4 rounded-lg overflow-x-auto text-xs">
                   {JSON.stringify(selectedNumber, null, 2)}
                 </pre>
@@ -650,13 +852,18 @@ export default function Dashboard({ data, onReset }) {
             <div className="bg-gray-50 px-6 py-4 flex justify-end gap-3 border-t border-gray-200">
               <button
                 onClick={() => {
-                  const blob = new Blob([JSON.stringify(selectedNumber, null, 2)], {
-                    type: 'application/json',
-                  });
+                  const blob = new Blob(
+                    [JSON.stringify(selectedNumber, null, 2)],
+                    {
+                      type: "application/json",
+                    }
+                  );
                   const url = URL.createObjectURL(blob);
-                  const a = document.createElement('a');
+                  const a = document.createElement("a");
                   a.href = url;
-                  a.download = `phone-${selectedNumber.rowNumber || 'details'}.json`;
+                  a.download = `phone-${
+                    selectedNumber.rowNumber || "details"
+                  }.json`;
                   a.click();
                   URL.revokeObjectURL(url);
                 }}

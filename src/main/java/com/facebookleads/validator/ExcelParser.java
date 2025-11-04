@@ -206,6 +206,11 @@ public class ExcelParser implements DataParser {
         String phoneNumber = cleanPhoneNumber(getCellValue(row, columnIndex.get("phone_number")));
         String country = getCellValue(row, columnIndex.get("country"));
 
+        if (rowNumber == 31 || rowNumber == 32) {
+            System.out.println("DEBUG Row " + rowNumber + " - Country column index: " + columnIndex.get("country")
+                    + ", Country value: '" + country + "', Length: " + (country != null ? country.length() : "null"));
+        }
+
         // Skip records without phone numbers
         if (phoneNumber == null || phoneNumber.isEmpty()) {
             return null;
@@ -258,7 +263,27 @@ public class ExcelParser implements DataParser {
             case BOOLEAN:
                 return String.valueOf(cell.getBooleanCellValue());
             case FORMULA:
-                return cell.getCellFormula();
+                // Get the cached/evaluated result, not the formula itself
+                try {
+                    CellType resultType = cell.getCachedFormulaResultType();
+                    switch (resultType) {
+                        case STRING:
+                            return cell.getStringCellValue().trim();
+                        case NUMERIC:
+                            double numValue = cell.getNumericCellValue();
+                            if (numValue == Math.floor(numValue)) {
+                                return String.valueOf((long) numValue);
+                            }
+                            return String.valueOf(numValue);
+                        case BOOLEAN:
+                            return String.valueOf(cell.getBooleanCellValue());
+                        default:
+                            return null;
+                    }
+                } catch (Exception e) {
+                    // If we can't get the result, return null
+                    return null;
+                }
             case BLANK:
                 return null;
             default:

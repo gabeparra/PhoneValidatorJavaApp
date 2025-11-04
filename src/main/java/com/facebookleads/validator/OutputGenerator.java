@@ -18,7 +18,11 @@ public class OutputGenerator {
 
     public OutputGenerator(String outputDir) {
         this.outputDir = outputDir;
-        this.gson = new GsonBuilder().setPrettyPrinting().create();
+        // Explicitly configure Gson to serialize nulls so we can see empty fields
+        this.gson = new GsonBuilder()
+                .setPrettyPrinting()
+                .serializeNulls()  // Include null fields in JSON
+                .create();
         this.dateFormat = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss");
     }
 

@@ -74,6 +74,7 @@ class PhoneNumber(BaseModel):
     platform: Optional[str] = None
     error: Optional[str] = None
     validationMethod: Optional[str] = None 
+    originalCountry: Optional[str] = None
 
 class ValidationResponse(BaseModel):
     status: str
@@ -126,7 +127,7 @@ async def validate_phones(file: UploadFile = File(...)):
     
     - **file**: SQL (.sql), CSV (.csv), or Excel (.xlsx, .xls) file containing Facebook leads data
     
-    Returns validated phone numbers with formatting and statistics
+    Returns validated phone numbers with formatting and statistics.
     """
     
     # Validate Java exists
@@ -195,13 +196,19 @@ async def validate_phones(file: UploadFile = File(...)):
         with open(summary_path) as f:
             summary = json.load(f)
         
+        # Use Java validation results as-is (no Python forceful testing)
+        total_numbers = summary.get("total_numbers", 0)
+        valid_count = len(valid_numbers)
+        invalid_count = len(invalid_numbers)
+        success_rate = float((valid_count / total_numbers * 100) if total_numbers > 0 else 0)
+        
         # Build response
         return ValidationResponse(
             status="success",
-            total_numbers=summary.get("total_numbers", 0),
-            valid_count=summary.get("valid_count", 0),
-            invalid_count=summary.get("invalid_count", 0),
-            success_rate=float(summary.get("success_rate", "0").rstrip('%')),
+            total_numbers=total_numbers,
+            valid_count=valid_count,
+            invalid_count=invalid_count,
+            success_rate=success_rate,
             valid_numbers=valid_numbers,
             invalid_numbers=invalid_numbers,
             country_breakdown=summary.get("valid_by_country", {}),
@@ -314,13 +321,13 @@ async def validate_phone_manual(request: ManualPhoneRequest):
         with open(summary_path) as f:
             summary = json.load(f)
         
-        # Build response
+        # Build response (no forceful testing for manual validation either)
         return ValidationResponse(
             status="success",
             total_numbers=summary.get("total_numbers", 0),
-            valid_count=summary.get("valid_count", 0),
-            invalid_count=summary.get("invalid_count", 0),
-            success_rate=float(summary.get("success_rate", "0").rstrip('%')),
+            valid_count=len(valid_numbers),
+            invalid_count=len(invalid_numbers),
+            success_rate=float((len(valid_numbers) / summary.get("total_numbers", 1) * 100) if summary.get("total_numbers", 0) > 0 else 0),
             valid_numbers=valid_numbers,
             invalid_numbers=invalid_numbers,
             country_breakdown=summary.get("valid_by_country", {}),
