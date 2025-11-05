@@ -8,6 +8,7 @@ import java.util.*;
 /**
  * Parses phone numbers from Excel files (.xlsx, .xls)
  * Handles flexible column mapping and multi-line cells
+ * Processes all sheets in the workbook
  */
 public class ExcelParser implements DataParser {
 
@@ -16,76 +17,117 @@ public class ExcelParser implements DataParser {
         System.out.println("📊 Reading Excel file: " + filePath);
 
         List<PhoneRecord> records = new ArrayList<>();
+        int totalSheets = 0;
+        int processedSheets = 0;
 
         try (FileInputStream fis = new FileInputStream(filePath);
                 Workbook workbook = new XSSFWorkbook(fis)) {
 
-            Sheet sheet = workbook.getSheetAt(0);
+            totalSheets = workbook.getNumberOfSheets();
+            System.out.println("📑 Found " + totalSheets + " sheet(s) in workbook");
 
-            if (sheet.getPhysicalNumberOfRows() == 0) {
-                System.out.println("⚠️  Warning: Excel sheet is empty");
-                return new PhoneNumberData(records);
-            }
+            // Process each sheet
+            for (int sheetIndex = 0; sheetIndex < totalSheets; sheetIndex++) {
+                Sheet sheet = workbook.getSheetAt(sheetIndex);
+                String sheetName = sheet.getSheetName();
+                
+                System.out.println();
+                System.out.println("━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━");
+                System.out.println("📄 Processing Sheet " + (sheetIndex + 1) + "/" + totalSheets + ": '" + sheetName + "'");
+                System.out.println("━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━");
 
-            // Parse header row
-            Row headerRow = sheet.getRow(sheet.getFirstRowNum());
-            if (headerRow == null) {
-                System.err.println("⚠️  Warning: Could not read header row");
-                return new PhoneNumberData(records);
-            }
-
-            Map<String, Integer> columnIndex = parseHeader(headerRow);
-
-            if (columnIndex.isEmpty()) {
-                System.err.println("⚠️  Warning: Could not detect required columns");
-                return new PhoneNumberData(records);
-            }
-
-            // Log detected columns
-            System.out.println("📍 Detected columns:");
-            if (columnIndex.containsKey("id"))
-                System.out.println("   - ID (column " + columnIndex.get("id") + ")");
-            if (columnIndex.containsKey("email"))
-                System.out.println("   - Email (column " + columnIndex.get("email") + ")");
-            if (columnIndex.containsKey("first_name"))
-                System.out.println("   - First Name (column " + columnIndex.get("first_name") + ")");
-            if (columnIndex.containsKey("last_name"))
-                System.out.println("   - Last Name (column " + columnIndex.get("last_name") + ")");
-            if (columnIndex.containsKey("phone_number"))
-                System.out.println("   - Phone (column " + columnIndex.get("phone_number") + ")");
-            if (columnIndex.containsKey("country"))
-                System.out.println("   - Country (column " + columnIndex.get("country") + ")");
-            System.out.println();
-
-            // Parse data rows
-            int rowNumber = 0;
-            int skippedCount = 0;
-
-            for (int i = 1; i <= sheet.getLastRowNum(); i++) {
-                Row row = sheet.getRow(i);
-                if (row == null)
-                    continue;
-
-                try {
-                    rowNumber++;
-                    PhoneRecord record = parseRow(rowNumber, row, columnIndex);
-                    if (record != null) {
-                        records.add(record);
-                    } else {
-                        skippedCount++;
-                    }
-                } catch (Exception e) {
-                    System.err.println("⚠️  Warning: Failed to parse row " + rowNumber + ": " + e.getMessage());
+                List<PhoneRecord> sheetRecords = parseSheet(sheet, sheetIndex);
+                
+                if (sheetRecords.size() > 0) {
+                    records.addAll(sheetRecords);
+                    processedSheets++;
+                    System.out.println("✅ Sheet '" + sheetName + "' processed: " + sheetRecords.size() + " records");
+                } else {
+                    System.out.println("⚠️  Sheet '" + sheetName + "' had no valid records");
                 }
             }
 
-            System.out.println("✅ Parsed " + records.size() + " phone records from Excel file");
-            if (skippedCount > 0) {
-                System.out.println("⚠️  Skipped " + skippedCount + " records (no phone number)");
-            }
+            System.out.println();
+            System.out.println("━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━");
+            System.out.println("✅ Parsed " + records.size() + " phone records from " + processedSheets + "/" + totalSheets + " sheet(s)");
+            System.out.println("━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━");
         }
 
         return new PhoneNumberData(records);
+    }
+
+    /**
+     * Parse a single sheet and return its records
+     */
+    private List<PhoneRecord> parseSheet(Sheet sheet, int sheetIndex) {
+        List<PhoneRecord> records = new ArrayList<>();
+
+        if (sheet.getPhysicalNumberOfRows() == 0) {
+            System.out.println("⚠️  Warning: Excel sheet is empty");
+            return records;
+        }
+
+        // Parse header row
+        Row headerRow = sheet.getRow(sheet.getFirstRowNum());
+        if (headerRow == null) {
+            System.err.println("⚠️  Warning: Could not read header row");
+            return records;
+        }
+
+        Map<String, Integer> columnIndex = parseHeader(headerRow);
+
+        if (columnIndex.isEmpty()) {
+            System.err.println("⚠️  Warning: Could not detect required columns");
+            return records;
+        }
+
+        // Log detected columns
+        System.out.println("📍 Detected columns:");
+        if (columnIndex.containsKey("id"))
+            System.out.println("   - ID (column " + columnIndex.get("id") + ")");
+        if (columnIndex.containsKey("email"))
+            System.out.println("   - Email (column " + columnIndex.get("email") + ")");
+        if (columnIndex.containsKey("first_name"))
+            System.out.println("   - First Name (column " + columnIndex.get("first_name") + ")");
+        if (columnIndex.containsKey("last_name"))
+            System.out.println("   - Last Name (column " + columnIndex.get("last_name") + ")");
+        if (columnIndex.containsKey("phone_number"))
+            System.out.println("   - Phone (column " + columnIndex.get("phone_number") + ")");
+        if (columnIndex.containsKey("us_telephone"))
+            System.out.println("   - US Telephone (column " + columnIndex.get("us_telephone") + ")");
+        if (columnIndex.containsKey("foreign_telephone"))
+            System.out.println("   - Foreign Telephone (column " + columnIndex.get("foreign_telephone") + ")");
+        if (columnIndex.containsKey("country"))
+            System.out.println("   - Country (column " + columnIndex.get("country") + ")");
+        System.out.println();
+
+        // Parse data rows
+        int rowNumber = 0;
+        int skippedCount = 0;
+
+        for (int i = 1; i <= sheet.getLastRowNum(); i++) {
+            Row row = sheet.getRow(i);
+            if (row == null)
+                continue;
+
+            try {
+                rowNumber++;
+                PhoneRecord record = parseRow(rowNumber, row, columnIndex);
+                if (record != null) {
+                    records.add(record);
+                } else {
+                    skippedCount++;
+                }
+            } catch (Exception e) {
+                System.err.println("⚠️  Warning: Failed to parse row " + rowNumber + ": " + e.getMessage());
+            }
+        }
+
+        if (skippedCount > 0) {
+            System.out.println("⚠️  Skipped " + skippedCount + " records (no phone number)");
+        }
+
+        return records;
     }
 
     /**
@@ -203,13 +245,17 @@ public class ExcelParser implements DataParser {
         String lastName = getCellValue(row, columnIndex.get("last_name"));
         String name = combineName(firstName, lastName);
 
-        String phoneNumber = cleanPhoneNumber(getCellValue(row, columnIndex.get("phone_number")));
-        String country = getCellValue(row, columnIndex.get("country"));
-
-        if (rowNumber == 31 || rowNumber == 32) {
-            System.out.println("DEBUG Row " + rowNumber + " - Country column index: " + columnIndex.get("country")
-                    + ", Country value: '" + country + "', Length: " + (country != null ? country.length() : "null"));
+        // Get phone number - prefer regular phone, then US telephone, then foreign telephone
+        String phoneNumber = getCellValue(row, columnIndex.get("phone_number"));
+        if (phoneNumber == null || phoneNumber.isEmpty()) {
+            phoneNumber = getCellValue(row, columnIndex.get("us_telephone"));
         }
+        if (phoneNumber == null || phoneNumber.isEmpty()) {
+            phoneNumber = getCellValue(row, columnIndex.get("foreign_telephone"));
+        }
+        
+        phoneNumber = cleanPhoneNumber(phoneNumber);
+        String country = getCellValue(row, columnIndex.get("country"));
 
         // Skip records without phone numbers
         if (phoneNumber == null || phoneNumber.isEmpty()) {
@@ -219,8 +265,7 @@ public class ExcelParser implements DataParser {
         // Create original line representation for reporting
         String originalLine = "Row " + (row.getRowNum() + 1);
 
-        // Pass original number and country - validator will handle formatting for
-        // parsing
+        // Pass original number and country - validator will handle formatting for parsing
         return new PhoneRecord(rowNumber, id, email, name, phoneNumber, country, null, originalLine);
     }
 
