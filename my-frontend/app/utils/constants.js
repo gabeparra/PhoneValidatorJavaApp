@@ -64,6 +64,7 @@ export const COUNTRY_NAMES = {
   VN: "Vietnam",
   ZM: "Zambia",
   AE: "United Arab Emirates",
+  KE: "Kenya",
 };
 
 // ============================================================================
@@ -108,6 +109,7 @@ export const COUNTRY_CODES = [
   { code: "VN", name: "Vietnam", dialCode: "+84" },
   { code: "ZM", name: "Zambia", dialCode: "+260" },
   { code: "AE", name: "United Arab Emirates", dialCode: "+971" },
+  { code: "KE", name: "Kenya", dialCode: "+254" },
 ];
 
 // ============================================================================

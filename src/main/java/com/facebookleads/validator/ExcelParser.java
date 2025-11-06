@@ -87,6 +87,8 @@ public class ExcelParser implements DataParser {
             System.out.println("   - ID (column " + columnIndex.get("id") + ")");
         if (columnIndex.containsKey("email"))
             System.out.println("   - Email (column " + columnIndex.get("email") + ")");
+        if (columnIndex.containsKey("name"))
+            System.out.println("   - Name (column " + columnIndex.get("name") + ")");
         if (columnIndex.containsKey("first_name"))
             System.out.println("   - First Name (column " + columnIndex.get("first_name") + ")");
         if (columnIndex.containsKey("last_name"))
@@ -99,6 +101,8 @@ public class ExcelParser implements DataParser {
             System.out.println("   - Foreign Telephone (column " + columnIndex.get("foreign_telephone") + ")");
         if (columnIndex.containsKey("country"))
             System.out.println("   - Country (column " + columnIndex.get("country") + ")");
+        if (columnIndex.containsKey("platform"))
+            System.out.println("   - Platform (column " + columnIndex.get("platform") + ")");
         System.out.println();
 
         // Parse data rows
@@ -186,8 +190,13 @@ public class ExcelParser implements DataParser {
                     System.out.println("   ✓ Found Email at column " + i + ": '" + header + "'");
                 }
             }
-            // Name columns
-            else if (headerLower.contains("first") && headerLower.contains("name")) {
+            // Name columns - check for full name first, then first/last name
+            else if (headerLower.equals("name") && !headerLower.contains("first") && !headerLower.contains("last")) {
+                if (!columnIndex.containsKey("name")) {
+                    columnIndex.put("name", i);
+                    System.out.println("   ✓ Found Name at column " + i + ": '" + header + "'");
+                }
+            } else if (headerLower.contains("first") && headerLower.contains("name")) {
                 columnIndex.put("first_name", i);
                 System.out.println("   ✓ Found First Name at column " + i + ": '" + header + "'");
             } else if (headerLower.contains("given") && headerLower.contains("name")) {
@@ -200,10 +209,17 @@ public class ExcelParser implements DataParser {
                 columnIndex.put("last_name", i);
                 System.out.println("   ✓ Found Surname at column " + i + ": '" + header + "'");
             }
-            // Phone columns - just "phone" or variations
-            else if (headerLower.equals("phone")) {
-                columnIndex.put("phone_number", i);
-                System.out.println("   ✓ Found Phone at column " + i + ": '" + header + "'");
+            // Phone columns - check for "updated number" and other variations
+            else if (headerLower.contains("updated") && headerLower.contains("number")) {
+                if (!columnIndex.containsKey("phone_number")) {
+                    columnIndex.put("phone_number", i);
+                    System.out.println("   ✓ Found Updated Number at column " + i + ": '" + header + "'");
+                }
+            } else if (headerLower.equals("phone")) {
+                if (!columnIndex.containsKey("phone_number")) {
+                    columnIndex.put("phone_number", i);
+                    System.out.println("   ✓ Found Phone at column " + i + ": '" + header + "'");
+                }
             } else if (headerLower.contains("phone") && !headerLower.contains("country")
                     && !headerLower.contains("code")) {
                 if (!columnIndex.containsKey("phone_number")) {
@@ -217,6 +233,13 @@ public class ExcelParser implements DataParser {
                     && !headerLower.contains("code")) {
                 columnIndex.put("foreign_telephone", i);
                 System.out.println("   ✓ Found Foreign Telephone at column " + i + ": '" + header + "'");
+            }
+            // Platform column
+            else if (headerLower.equals("platform")) {
+                if (!columnIndex.containsKey("platform")) {
+                    columnIndex.put("platform", i);
+                    System.out.println("   ✓ Found Platform at column " + i + ": '" + header + "'");
+                }
             }
             // Country columns - FIXED: specifically check for "country" not just "count"
             // This prevents matching "1st Check", "2nd Check", etc.
@@ -241,9 +264,13 @@ public class ExcelParser implements DataParser {
         String id = getCellValue(row, columnIndex.get("id"));
         String email = getCellValue(row, columnIndex.get("email"));
 
-        String firstName = getCellValue(row, columnIndex.get("first_name"));
-        String lastName = getCellValue(row, columnIndex.get("last_name"));
-        String name = combineName(firstName, lastName);
+        // Get name - prefer full name, then combine first/last name
+        String name = getCellValue(row, columnIndex.get("name"));
+        if (name == null || name.isEmpty()) {
+            String firstName = getCellValue(row, columnIndex.get("first_name"));
+            String lastName = getCellValue(row, columnIndex.get("last_name"));
+            name = combineName(firstName, lastName);
+        }
 
         // Get phone number - prefer regular phone, then US telephone, then foreign telephone
         String phoneNumber = getCellValue(row, columnIndex.get("phone_number"));
@@ -256,6 +283,7 @@ public class ExcelParser implements DataParser {
         
         phoneNumber = cleanPhoneNumber(phoneNumber);
         String country = getCellValue(row, columnIndex.get("country"));
+        String platform = getCellValue(row, columnIndex.get("platform"));
 
         // Skip records without phone numbers
         if (phoneNumber == null || phoneNumber.isEmpty()) {
@@ -266,7 +294,7 @@ public class ExcelParser implements DataParser {
         String originalLine = "Row " + (row.getRowNum() + 1);
 
         // Pass original number and country - validator will handle formatting for parsing
-        return new PhoneRecord(rowNumber, id, email, name, phoneNumber, country, null, originalLine);
+        return new PhoneRecord(rowNumber, id, email, name, phoneNumber, country, platform, originalLine);
     }
 
     /**
