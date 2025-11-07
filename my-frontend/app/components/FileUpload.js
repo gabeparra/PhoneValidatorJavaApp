@@ -6,6 +6,7 @@ import {
   MANUAL_TEST_COUNTRIES,
   DEFAULTS,
 } from '../utils/constants';
+import BestPracticesTab from './BestPracticesTab';
 
 export default function FileUpload({ onFileUpload, loading, error }) {
   const [selectedFile, setSelectedFile] = useState(null);
@@ -13,6 +14,7 @@ export default function FileUpload({ onFileUpload, loading, error }) {
   const [manualNumber, setManualNumber] = useState('');
   const [manualCountry, setManualCountry] = useState(DEFAULTS.MANUAL_TEST_COUNTRY);
   const [showManualInput, setShowManualInput] = useState(false);
+  const [showBestPractices, setShowBestPractices] = useState(false);
 
   const handleDrag = (e) => {
     e.preventDefault();
@@ -72,6 +74,29 @@ export default function FileUpload({ onFileUpload, loading, error }) {
 
   return (
     <div className="max-w-2xl mx-auto space-y-6">
+      {/* Best Practices Guide */}
+      <div className="bg-white rounded-lg shadow-lg p-8 border-t-4 border-yellow-400">
+        <button
+          onClick={() => setShowBestPractices(!showBestPractices)}
+          className="w-full flex items-center justify-between text-left font-semibold text-black hover:text-yellow-600"
+        >
+          <span>📋 Excel File Best Practices Guide</span>
+          <svg
+            className={`h-5 w-5 transform transition-transform ${showBestPractices ? 'rotate-180' : ''}`}
+            fill="currentColor"
+            viewBox="0 0 20 20"
+          >
+            <path fillRule="evenodd" d="M5.293 7.293a1 1 0 011.414 0L10 10.586l3.293-3.293a1 1 0 111.414 1.414l-4 4a1 1 0 01-1.414 0l-4-4a1 1 0 010-1.414z" clipRule="evenodd" />
+          </svg>
+        </button>
+
+        {showBestPractices && (
+          <div className="mt-6">
+            <BestPracticesTab />
+          </div>
+        )}
+      </div>
+
       {/* File Upload */}
       <div className="bg-white rounded-lg shadow-lg p-8 border-t-4 border-yellow-400">
         <div
