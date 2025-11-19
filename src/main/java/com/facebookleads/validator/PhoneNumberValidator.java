@@ -173,23 +173,20 @@ public class PhoneNumberValidator {
 
                 // Step 2: If country hint exists, try parsing with that region
                 if (!isValid && detectedRegion != null) {
+                    // Get the expected country code for this region
+                    int expectedCountryCode = phoneUtil.getCountryCodeForRegion(detectedRegion);
+                    String phoneToTest = originalPhoneNumber;
+
+                    // Strip leading + if present
+                    if (phoneToTest.startsWith("+")) {
+                        phoneToTest = phoneToTest.substring(1);
+                    }
+
+                    String countryCodeStr = String.valueOf(expectedCountryCode);
+
+                    // Attempt 1: Try parsing as-is with the region (libphonenumber handles national
+                    // format)
                     try {
-                        // Get the expected country code for this region
-                        int expectedCountryCode = phoneUtil.getCountryCodeForRegion(detectedRegion);
-                        String phoneToTest = originalPhoneNumber;
-
-                        // Strip leading + if present
-                        if (phoneToTest.startsWith("+")) {
-                            phoneToTest = phoneToTest.substring(1);
-                        }
-
-                        // If number starts with the country code, remove it for national parsing
-                        String countryCodeStr = String.valueOf(expectedCountryCode);
-                        if (phoneToTest.startsWith(countryCodeStr)) {
-                            phoneToTest = phoneToTest.substring(countryCodeStr.length());
-                        }
-
-                        // Try with the detected region (libphonenumber will add country code)
                         PhoneNumber phoneNumber = phoneUtil.parse(phoneToTest, detectedRegion);
                         if (phoneUtil.isValidNumber(phoneNumber)) {
                             isValid = true;
@@ -197,7 +194,100 @@ public class PhoneNumberValidator {
                             validationMethod = "country_code";
                         }
                     } catch (NumberParseException e) {
-                        // Continue to step 3
+                        // Continue to next attempt
+                    }
+
+                    // Attempt 2: If number starts with country code, parse with auto-detect
+                    if (!isValid && phoneToTest.startsWith(countryCodeStr)) {
+                        try {
+                            PhoneNumber phoneNumber = phoneUtil.parse("+" + phoneToTest, null);
+                            if (phoneUtil.isValidNumber(phoneNumber)) {
+                                isValid = true;
+                                validPhoneNumber = phoneNumber;
+                                validationMethod = "country_code";
+                            }
+                        } catch (NumberParseException e) {
+                            // Continue to next attempt
+                        }
+                    }
+
+                    // Attempt 3: Add leading 0 for national format (if applicable)
+                    if (!isValid) {
+                        String nationalFormat = phoneToTest;
+                        // Remove country code if present for national format attempt
+                        if (nationalFormat.startsWith(countryCodeStr)) {
+                            nationalFormat = nationalFormat.substring(countryCodeStr.length());
+                        }
+
+                        // If number is too long (might have extra leading digit), try removing it
+                        if (nationalFormat.length() > 9 && detectedRegion.equals("EC")) {
+                            // Ecuador numbers should be 9 digits, try removing first digit
+                            String shortened = nationalFormat.substring(1);
+                            if (!shortened.startsWith("0")) {
+                                nationalFormat = "0" + shortened;
+                                try {
+                                    PhoneNumber phoneNumber = phoneUtil.parse(nationalFormat, detectedRegion);
+                                    if (phoneUtil.isValidNumber(phoneNumber)) {
+                                        isValid = true;
+                                        validPhoneNumber = phoneNumber;
+                                        validationMethod = "country_code";
+                                    }
+                                } catch (NumberParseException e) {
+                                    // Try original format
+                                }
+                            }
+                        }
+
+                        if (!nationalFormat.startsWith("0") && nationalFormat.length() > 0) {
+                            // Check if this region typically uses leading 0 for national format
+                            if (detectedRegion.equals("EC") || detectedRegion.equals("PE") ||
+                                    detectedRegion.equals("CO") || detectedRegion.equals("CL") ||
+                                    detectedRegion.equals("AR") || detectedRegion.equals("VE")) {
+                                nationalFormat = "0" + nationalFormat;
+                                try {
+                                    PhoneNumber phoneNumber = phoneUtil.parse(nationalFormat, detectedRegion);
+                                    if (phoneUtil.isValidNumber(phoneNumber)) {
+                                        isValid = true;
+                                        validPhoneNumber = phoneNumber;
+                                        validationMethod = "country_code";
+                                    }
+                                } catch (NumberParseException e) {
+                                    // Continue to step 3
+                                }
+                            }
+                        }
+                    }
+
+                    // Attempt 4: Add country code prefix ONLY if number doesn't already have it
+                    // and the resulting length makes sense (not too long)
+                    if (!isValid && !phoneToTest.startsWith(countryCodeStr)) {
+                        // Check if adding country code would create a reasonable length
+                        // Ecuador: country code (3) + national number (9) = 12 digits total
+                        int expectedTotalLength = countryCodeStr.length() + 9; // Adjust per country if needed
+                        String testWithCountryCode = countryCodeStr + phoneToTest;
+
+                        // If the number is too long, try removing leading digits that might be area
+                        // code
+                        if (testWithCountryCode.length() >= expectedTotalLength + 1) {
+                            // Try removing first digit (might be area code prefix)
+                            if (phoneToTest.length() > 9) {
+                                String shortened = phoneToTest.substring(1);
+                                testWithCountryCode = countryCodeStr + shortened;
+                            }
+                        }
+
+                        if (testWithCountryCode.length() <= expectedTotalLength + 2) { // Allow some flexibility
+                            try {
+                                PhoneNumber phoneNumber = phoneUtil.parse("+" + testWithCountryCode, null);
+                                if (phoneUtil.isValidNumber(phoneNumber)) {
+                                    isValid = true;
+                                    validPhoneNumber = phoneNumber;
+                                    validationMethod = "country_code";
+                                }
+                            } catch (NumberParseException e) {
+                                // Continue to step 3
+                            }
+                        }
                     }
                 }
 
@@ -215,19 +305,117 @@ public class PhoneNumberValidator {
                     }
                 }
 
-                // Step 4: Forceful testing - try ALL country codes
+                // Step 4: Forceful testing - try ALL country codes with multiple formats
                 if (!isValid) {
                     for (String region : FORCEFUL_TEST_REGIONS) {
+                        int regionCountryCode = phoneUtil.getCountryCodeForRegion(region);
+                        String countryCodeStr = String.valueOf(regionCountryCode);
+                        String phoneToTest = originalPhoneNumber;
+
+                        // Strip leading + if present
+                        if (phoneToTest.startsWith("+")) {
+                            phoneToTest = phoneToTest.substring(1);
+                        }
+
+                        // Try format 1: Parse as-is with the region (libphonenumber handles national
+                        // format)
                         try {
-                            PhoneNumber phoneNumber = phoneUtil.parse(originalPhoneNumber, region);
+                            PhoneNumber phoneNumber = phoneUtil.parse(phoneToTest, region);
                             if (phoneUtil.isValidNumber(phoneNumber)) {
                                 isValid = true;
                                 validPhoneNumber = phoneNumber;
                                 validationMethod = "forceful";
-                                break; // Found valid, stop searching
+                                break;
                             }
                         } catch (NumberParseException e) {
-                            // Continue to next region
+                            // Continue to next format
+                        }
+
+                        // Try format 2: If number starts with country code, parse with auto-detect
+                        if (!isValid && phoneToTest.startsWith(countryCodeStr)) {
+                            try {
+                                PhoneNumber phoneNumber = phoneUtil.parse("+" + phoneToTest, null);
+                                if (phoneUtil.isValidNumber(phoneNumber)) {
+                                    isValid = true;
+                                    validPhoneNumber = phoneNumber;
+                                    validationMethod = "forceful";
+                                    break;
+                                }
+                            } catch (NumberParseException e) {
+                                // Continue to next format
+                            }
+                        }
+
+                        // Try format 3: National format with leading 0 (if applicable)
+                        String nationalFormat = phoneToTest;
+                        // Remove country code if present
+                        if (nationalFormat.startsWith(countryCodeStr)) {
+                            nationalFormat = nationalFormat.substring(countryCodeStr.length());
+                        }
+
+                        // If number is too long (might have extra leading digit), try removing it
+                        if (nationalFormat.length() > 9 && region.equals("EC")) {
+                            // Ecuador numbers should be 9 digits, try removing first digit
+                            String shortened = nationalFormat.substring(1);
+                            if (!shortened.startsWith("0")) {
+                                String testFormat = "0" + shortened;
+                                try {
+                                    PhoneNumber phoneNumber = phoneUtil.parse(testFormat, region);
+                                    if (phoneUtil.isValidNumber(phoneNumber)) {
+                                        isValid = true;
+                                        validPhoneNumber = phoneNumber;
+                                        validationMethod = "forceful";
+                                        break;
+                                    }
+                                } catch (NumberParseException e) {
+                                    // Try original format
+                                }
+                            }
+                        }
+
+                        if (!nationalFormat.startsWith("0") && nationalFormat.length() > 0) {
+                            if (region.equals("EC") || region.equals("PE") ||
+                                    region.equals("CO") || region.equals("CL") ||
+                                    region.equals("AR") || region.equals("VE")) {
+                                nationalFormat = "0" + nationalFormat;
+                                try {
+                                    PhoneNumber phoneNumber = phoneUtil.parse(nationalFormat, region);
+                                    if (phoneUtil.isValidNumber(phoneNumber)) {
+                                        isValid = true;
+                                        validPhoneNumber = phoneNumber;
+                                        validationMethod = "forceful";
+                                        break;
+                                    }
+                                } catch (NumberParseException e) {
+                                    // Continue to next region
+                                }
+                            }
+                        }
+
+                        // Try format 4: Add country code prefix ONLY if it makes sense length-wise
+                        if (!isValid && !phoneToTest.startsWith(countryCodeStr)) {
+                            // Only try if the resulting number would be reasonable length
+                            String testNumber = countryCodeStr + phoneToTest;
+
+                            // If too long, try removing leading digit (might be area code prefix)
+                            if (testNumber.length() >= 13 && phoneToTest.length() > 9) {
+                                String shortened = phoneToTest.substring(1);
+                                testNumber = countryCodeStr + shortened;
+                            }
+
+                            if (testNumber.length() <= 13) { // Reasonable upper bound
+                                try {
+                                    PhoneNumber phoneNumber = phoneUtil.parse("+" + testNumber, null);
+                                    if (phoneUtil.isValidNumber(phoneNumber)) {
+                                        isValid = true;
+                                        validPhoneNumber = phoneNumber;
+                                        validationMethod = "forceful";
+                                        break;
+                                    }
+                                } catch (NumberParseException e) {
+                                    // Continue to next region
+                                }
+                            }
                         }
                     }
                 }
