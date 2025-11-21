@@ -3,7 +3,7 @@ Phone Validator API
 FastAPI wrapper for the Java phone validation application
 """
 
-from fastapi import FastAPI, UploadFile, File, HTTPException
+from fastapi import FastAPI, UploadFile, File, HTTPException, Form
 from fastapi.responses import JSONResponse
 from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel
@@ -15,7 +15,6 @@ import os
 import shutil
 from pathlib import Path
 from datetime import datetime
-
 # Find Java executable
 def find_java_executable():
     """Find the Java executable in system PATH"""
@@ -247,15 +246,33 @@ async def validate_phones(file: UploadFile = File(...)):
             shutil.rmtree(tmp_output_dir)
 
 @app.post("/validate-phones-manual", response_model=ValidationResponse)
-async def validate_phone_manual(request: ManualPhoneRequest):
+async def validate_phone_manual(
+    request: Optional[ManualPhoneRequest] = None,
+    phone: Optional[str] = None,
+    country: Optional[str] = None
+):
     """
     Validate a single phone number manually entered by user
+    Accepts both JSON and form-encoded data for Zapier compatibility
     
     - **phone**: Phone number to validate (with or without country code)
-    - **country**: Country code for fallback (e.g., 'US', 'BR')
+    - **country**: Country code for fallback (e.g., 'US', 'BR', 'Ecuador')
     
     Returns validation result for that single number
     """
+    
+    # Handle both JSON (request body) and form data (query/form params)
+    phone_number = None
+    country_name = None
+    
+    if request:
+        # JSON body format
+        phone_number = request.phone
+        country_name = request.country
+    else:
+        # Form data or query params
+        phone_number = phone
+        country_name = country
     
     # Validate Java exists
     if JAVA_PATH is None:
@@ -272,7 +289,7 @@ async def validate_phone_manual(request: ManualPhoneRequest):
         )
     
     # Validate input
-    if not request.phone or not request.phone.strip():
+    if not phone_number or not phone_number.strip():
         raise HTTPException(
             status_code=400,
             detail="Phone number cannot be empty"
@@ -284,7 +301,7 @@ async def validate_phone_manual(request: ManualPhoneRequest):
     try:
         # Create a temporary CSV file with the single phone number
         csv_content = "rowNumber,id,email,name,phone_number,country,platform\n"
-        csv_content += f'1,"manual-test","","Manual Test","{request.phone.strip()}","{request.country or ""}","web"\n'
+        csv_content += f'1,"manual-test","","Manual Test","{phone_number.strip()}","{country_name or ""}","web"\n'
         
         with tempfile.NamedTemporaryFile(delete=False, suffix='.csv', mode='w') as tmp:
             tmp.write(csv_content)
