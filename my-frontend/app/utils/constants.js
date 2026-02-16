@@ -15,6 +15,8 @@ export const API_CONFIG = {
     VALIDATE_PHONES_FORCEFUL: "/validate-phones-forceful",
     HEALTH: "/health",
     STATS: "/stats",
+    JOB_STATUS: "/job",
+    QUEUE_STATS: "/queue/stats",
   },
   TIMEOUTS: {
     FILE_UPLOAD: 120000, // 2 minutes
@@ -65,6 +67,7 @@ export const COUNTRY_NAMES = {
   ZM: "Zambia",
   AE: "United Arab Emirates",
   KE: "Kenya",
+  TZ: "Tanzania",
 };
 
 // ============================================================================
@@ -110,6 +113,7 @@ export const COUNTRY_CODES = [
   { code: "ZM", name: "Zambia", dialCode: "+260" },
   { code: "AE", name: "United Arab Emirates", dialCode: "+971" },
   { code: "KE", name: "Kenya", dialCode: "+254" },
+  { code: "TZ", name: "Tanzania", dialCode: "+255" },
 ];
 
 // ============================================================================

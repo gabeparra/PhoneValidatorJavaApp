@@ -36,10 +36,19 @@ A comprehensive phone number validation system with Java processing engine, Fast
 
 ## 🚀 Quick Start
 
+### Prerequisites Setup
+
+First, install Redis (required for queue system):
+
+```bash
+cd /home/ubuntu/PhoneValidatorJavaApp
+./setup-redis.sh
+```
+
 ### One-Command Startup (Recommended)
 
 ```bash
-cd /home/gabriel/projects/PhoneValidatorJavaApp
+cd /home/ubuntu/PhoneValidatorJavaApp
 ./start-api.sh
 ```
 
@@ -48,6 +57,7 @@ This automatically:
 - ✅ Installs all dependencies
 - ✅ Builds Java JAR if needed
 - ✅ Starts FastAPI backend (port 8000)
+- ✅ Starts Queue worker (processes validation jobs)
 - ✅ Starts Next.js frontend (port 3000)
 
 **Access Points:**
@@ -61,6 +71,7 @@ This automatically:
 - **Java**: 8 or higher (for phone validation engine)
 - **Python**: 3.8+ (for FastAPI)
 - **Maven**: 3.5+ (for building Java JAR)
+- **Redis**: 5.0+ (for queue system - prevents overwhelming with concurrent requests)
 
 ### Frontend
 - **Node.js**: 16+ 
@@ -91,6 +102,8 @@ PhoneValidatorJavaApp/
 ├── venv/                        # Python virtual environment
 ├── pom.xml                      # Maven config
 ├── start-api.sh                 # All-in-one startup script
+├── setup-redis.sh               # Redis setup script
+├── ecosystem.config.js          # PM2 configuration (includes queue worker)
 └── README.md                    # This file
 ```
 
@@ -103,21 +116,51 @@ API information and available endpoints
 Health check - shows Java and JAR availability
 
 ### `POST /validate-phones`
-Upload and validate phone numbers from file
+Upload and validate phone numbers from file (uses queue system)
 
 **Request**: Multipart form with file (SQL/CSV/Excel)
 
-**Response**:
+**Response** (Job queued):
 ```json
 {
-  "status": "success",
-  "total_numbers": 50,
-  "valid_count": 49,
-  "invalid_count": 1,
-  "success_rate": 98.0,
-  "valid_numbers": [...],
-  "invalid_numbers": [...],
-  "country_breakdown": {...}
+  "status": "queued",
+  "job_id": "validation_20240121_153045_abc123.csv",
+  "message": "Validation job has been queued. Use /job/{job_id} to check status.",
+  "position": 1
+}
+```
+
+### `GET /job/{job_id}`
+Check the status of a validation job
+
+**Response** (Job in progress):
+```json
+{
+  "job_id": "validation_20240121_153045_abc123.csv",
+  "status": "started",
+  "progress": "Running Java validator...",
+  "position": null,
+  "created_at": "2024-01-21T15:30:45",
+  "started_at": "2024-01-21T15:30:47"
+}
+```
+
+**Response** (Job completed):
+```json
+{
+  "job_id": "validation_20240121_153045_abc123.csv",
+  "status": "finished",
+  "result": {
+    "status": "success",
+    "total_numbers": 50,
+    "valid_count": 49,
+    "invalid_count": 1,
+    "success_rate": 98.0,
+    "valid_numbers": [...],
+    "invalid_numbers": [...],
+    "country_breakdown": {...}
+  },
+  "completed_at": "2024-01-21T15:31:15"
 }
 ```
 
@@ -293,7 +336,47 @@ API_HOST=0.0.0.0
 NEXT_PUBLIC_API_URL=http://localhost:8000
 ```
 
+## 📦 Queue System
+
+The phone validator uses a **Redis Queue (RQ)** system to handle concurrent requests and prevent overwhelming the system:
+
+- **Benefits**: Prevents timeouts, handles multiple users simultaneously, better resource management
+- **How it works**: File uploads are queued and processed by worker processes
+- **Frontend**: Automatically polls for job status and displays progress
+- **Workers**: 2 worker instances run in parallel (configurable in `ecosystem.config.js`)
+
+### Queue Management
+
+```bash
+# Check queue statistics
+curl http://localhost:8000/queue/stats
+
+# View worker logs
+pm2 logs phone-validator-queue-worker
+
+# Restart queue workers
+pm2 restart phone-validator-queue-worker
+```
+
 ## 🔍 Troubleshooting
+
+### Redis Not Running
+
+If you see "Queue system is not available" error:
+
+```bash
+# Check Redis status
+sudo systemctl status redis-server
+
+# Start Redis
+sudo systemctl start redis-server
+
+# Enable Redis on boot
+sudo systemctl enable redis-server
+
+# Run setup script
+./setup-redis.sh
+```
 
 ### Port Already in Use
 ```bash

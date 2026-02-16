@@ -49,6 +49,7 @@ public class CountryCodeUtil {
         COUNTRY_CODES.put("VIET NAM", "84");
         COUNTRY_CODES.put("VIETNAM", "84");
         COUNTRY_CODES.put("ZAMBIA", "260");
+        COUNTRY_CODES.put("TANZANIA", "255");
     }
 
     /**

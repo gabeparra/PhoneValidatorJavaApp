@@ -18,6 +18,24 @@ module.exports = {
         instances: 1
     },
     {
+        name: 'phone-validator-queue-worker',
+        script: '/home/ubuntu/PhoneValidatorJavaApp/start_rq_worker.py',
+        interpreter: '/home/ubuntu/PhoneValidatorJavaApp/venv/bin/python3',
+        exec_mode: 'fork',
+        cwd: '/home/ubuntu/PhoneValidatorJavaApp',
+        env: {
+            PATH: '/home/ubuntu/PhoneValidatorJavaApp/venv/bin:$PATH'
+        },
+        error_file: './logs/worker-error.log',
+        out_file: './logs/worker.log',
+        log_date_format: 'YYYY-MM-DD HH:mm:ss Z',
+        autorestart: true,
+        max_restarts: 10,
+        min_uptime: '10s',
+        watch: false,
+        instances: 1
+    },
+    {
         name: 'phone-validator-frontend',
         script: 'npm',
         args: 'run dev',

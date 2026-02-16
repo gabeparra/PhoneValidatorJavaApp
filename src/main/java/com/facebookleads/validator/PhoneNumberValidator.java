@@ -22,7 +22,7 @@ public class PhoneNumberValidator {
             "BD", "BE", "BJ", "CL", "CN", "EC", "EG", "SV",
             "HN", "IN", "IL", "KZ", "KG", "MA", "MY", "NP",
             "NG", "OM", "PK", "PE", "RU", "SA", "SG", "TR",
-            "UZ", "VE", "VN", "ZM", "AE"
+            "UZ", "VE", "VN", "ZM", "AE", "TZ"
     };
 
     static {
@@ -62,6 +62,7 @@ public class PhoneNumberValidator {
         COUNTRY_TO_REGION.put("VIET NAM", "VN");
         COUNTRY_TO_REGION.put("VIETNAM", "VN");
         COUNTRY_TO_REGION.put("ZAMBIA", "ZM");
+        COUNTRY_TO_REGION.put("TANZANIA", "TZ");
 
         // Add missing countries
         COUNTRY_TO_REGION.put("BELGIUM", "BE");
@@ -109,6 +110,7 @@ public class PhoneNumberValidator {
         COUNTRY_TO_REGION.put("SG", "SG");
         COUNTRY_TO_REGION.put("MY", "MY");
         COUNTRY_TO_REGION.put("AE", "AE");
+        COUNTRY_TO_REGION.put("TZ", "TZ");
     }
 
     public ValidationResult validate(PhoneNumberData data) {
@@ -425,19 +427,48 @@ public class PhoneNumberValidator {
                     String regionCode = phoneUtil.getRegionCodeForNumber(validPhoneNumber);
                     String numberType = phoneUtil.getNumberType(validPhoneNumber).toString();
 
-                    // If it only validated through forceful testing, mark as invalid
+                    // If it only validated through forceful testing, check if it's a supported country
+                    // If the region is in our supported list, accept it as valid
                     if ("forceful".equals(validationMethod)) {
-                        invalidNumbers.add(new InvalidPhoneRecord(
-                                record.getRowNumber(),
-                                record.getId(),
-                                record.getEmail(),
-                                record.getName(),
-                                originalPhoneNumber,
-                                String.format("Only validated through forceful testing as %s %s - data quality issue",
-                                        regionCode,
-                                        phoneUtil.format(validPhoneNumber, PhoneNumberFormat.E164)),
-                                record.getPlatform(),
-                                countryHint));
+                        boolean isSupportedCountry = false;
+                        for (String supportedRegion : FORCEFUL_TEST_REGIONS) {
+                            if (supportedRegion.equals(regionCode)) {
+                                isSupportedCountry = true;
+                                break;
+                            }
+                        }
+                        
+                        if (isSupportedCountry) {
+                            // Valid number - country hint was missing/wrong but number is valid for supported country
+                            validNumbers.add(new ValidPhoneRecord(
+                                    record.getRowNumber(),
+                                    record.getId(),
+                                    record.getEmail(),
+                                    record.getName(),
+                                    originalPhoneNumber,
+                                    phoneUtil.format(validPhoneNumber, PhoneNumberFormat.E164),
+                                    phoneUtil.format(validPhoneNumber, PhoneNumberFormat.INTERNATIONAL),
+                                    phoneUtil.format(validPhoneNumber, PhoneNumberFormat.NATIONAL),
+                                    countryCode,
+                                    regionCode != null ? regionCode : "Unknown",
+                                    numberType,
+                                    record.getPlatform(),
+                                    "forceful",
+                                    countryHint));
+                        } else {
+                            // Not a supported country - mark as invalid
+                            invalidNumbers.add(new InvalidPhoneRecord(
+                                    record.getRowNumber(),
+                                    record.getId(),
+                                    record.getEmail(),
+                                    record.getName(),
+                                    originalPhoneNumber,
+                                    String.format("Only validated through forceful testing as %s %s - data quality issue",
+                                            regionCode,
+                                            phoneUtil.format(validPhoneNumber, PhoneNumberFormat.E164)),
+                                    record.getPlatform(),
+                                    countryHint));
+                        }
                     } else {
                         // Valid number through normal validation
                         validNumbers.add(new ValidPhoneRecord(

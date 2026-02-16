@@ -29,7 +29,54 @@ export default function OverviewTab({ data }) {
         <h3 className="text-lg font-semibold mb-4 text-black">
           Download Options
         </h3>
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+          <div className="border border-gray-200 rounded-lg p-4">
+            <h4 className="font-medium mb-2 text-black">All Numbers</h4>
+            <div className="flex flex-col gap-2">
+              <button
+                onClick={() => {
+                  const allNumbers = [
+                    ...data.valid_numbers.map((n) => ({
+                      ...n,
+                      status: "valid",
+                    })),
+                    ...data.invalid_numbers.map((n) => ({
+                      ...n,
+                      status: "invalid",
+                    })),
+                  ];
+                  downloadJSON(
+                    allNumbers,
+                    generateDownloadFilename("all_numbers", ".json")
+                  );
+                }}
+                className="w-full bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700 transition-colors"
+              >
+                Download JSON
+              </button>
+              <button
+                onClick={() => {
+                  const allNumbers = [
+                    ...data.valid_numbers.map((n) => ({
+                      ...n,
+                      status: "valid",
+                    })),
+                    ...data.invalid_numbers.map((n) => ({
+                      ...n,
+                      status: "invalid",
+                    })),
+                  ];
+                  downloadCSV(
+                    allNumbers,
+                    generateDownloadFilename("all_numbers", ".csv")
+                  );
+                }}
+                className="w-full bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700 transition-colors"
+              >
+                Download CSV
+              </button>
+            </div>
+          </div>
           <div className="border border-gray-200 rounded-lg p-4">
             <h4 className="font-medium mb-2 text-black">Valid Numbers</h4>
             <div className="flex gap-2">
