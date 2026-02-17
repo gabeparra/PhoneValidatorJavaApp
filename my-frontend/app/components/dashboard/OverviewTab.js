@@ -38,7 +38,7 @@ export default function OverviewTab({ data }) {
                   const allNumbers = [
                     ...data.valid_numbers.map((n) => ({
                       ...n,
-                      status: "valid",
+                      status: n.validationMethod === "forceful" ? "forceful" : "valid",
                     })),
                     ...data.invalid_numbers.map((n) => ({
                       ...n,
@@ -59,7 +59,7 @@ export default function OverviewTab({ data }) {
                   const allNumbers = [
                     ...data.valid_numbers.map((n) => ({
                       ...n,
-                      status: "valid",
+                      status: n.validationMethod === "forceful" ? "forceful" : "valid",
                     })),
                     ...data.invalid_numbers.map((n) => ({
                       ...n,

@@ -23,9 +23,23 @@ export default function PhoneNumbersTable({
   forcefulCount,
   fullyInvalidCount,
   onViewDetails,
+  isForcefulTab = false,
 }) {
   return (
     <div>
+      {isForcefulTab && (
+        <div className="mb-6 bg-yellow-50 border-2 border-yellow-400 rounded-lg p-4">
+          <h3 className="text-lg font-semibold text-yellow-900 mb-2">
+            ⚠️ Forceful Validation Results
+          </h3>
+          <p className="text-sm text-yellow-800">
+            These numbers were validated through forceful testing (trying all supported countries).
+            They are technically valid but may have data quality issues (e.g., missing or incorrect country information).
+            Review these numbers carefully before using them.
+          </p>
+        </div>
+      )}
+
       <div className="mb-4">
         <input
           type="text"
@@ -36,7 +50,7 @@ export default function PhoneNumbersTable({
         />
       </div>
 
-      {activeTab === TABS.VALID && (
+      {activeTab === TABS.VALID && !isForcefulTab && (
         <div className="mb-4 flex gap-2 flex-wrap">
           <button
             onClick={() =>

@@ -107,7 +107,6 @@ public class ExcelParser implements DataParser {
 
         // Parse data rows
         int rowNumber = 0;
-        int skippedCount = 0;
 
         for (int i = 1; i <= sheet.getLastRowNum(); i++) {
             Row row = sheet.getRow(i);
@@ -119,16 +118,10 @@ public class ExcelParser implements DataParser {
                 PhoneRecord record = parseRow(rowNumber, row, columnIndex);
                 if (record != null) {
                     records.add(record);
-                } else {
-                    skippedCount++;
                 }
             } catch (Exception e) {
                 System.err.println("⚠️  Warning: Failed to parse row " + rowNumber + ": " + e.getMessage());
             }
-        }
-
-        if (skippedCount > 0) {
-            System.out.println("⚠️  Skipped " + skippedCount + " records (no phone number)");
         }
 
         return records;
@@ -285,13 +278,14 @@ public class ExcelParser implements DataParser {
         String country = getCellValue(row, columnIndex.get("country"));
         String platform = getCellValue(row, columnIndex.get("platform"));
 
-        // Skip records without phone numbers
-        if (phoneNumber == null || phoneNumber.isEmpty()) {
-            return null;
-        }
-
         // Create original line representation for reporting
         String originalLine = "Row " + (row.getRowNum() + 1);
+
+        // Always create a record, even if phone number is missing - validator will mark it as invalid
+        // Use empty string instead of null for missing phone numbers to ensure it's processed
+        if (phoneNumber == null || phoneNumber.isEmpty()) {
+            phoneNumber = "";
+        }
 
         // Pass original number and country - validator will handle formatting for parsing
         return new PhoneRecord(rowNumber, id, email, name, phoneNumber, country, platform, originalLine);

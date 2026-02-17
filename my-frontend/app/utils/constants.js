@@ -68,6 +68,46 @@ export const COUNTRY_NAMES = {
   AE: "United Arab Emirates",
   KE: "Kenya",
   TZ: "Tanzania",
+  PT: "Portugal",
+  FR: "France",
+  DE: "Germany",
+  IT: "Italy",
+  GB: "United Kingdom",
+  NL: "Netherlands",
+  PL: "Poland",
+  GR: "Greece",
+  AT: "Austria",
+  CH: "Switzerland",
+  GT: "Guatemala",
+  PA: "Panama",
+  NI: "Nicaragua",
+  DO: "Dominican Republic",
+  UY: "Uruguay",
+  PY: "Paraguay",
+  BO: "Bolivia",
+  JO: "Jordan",
+  QA: "Qatar",
+  KW: "Kuwait",
+  BH: "Bahrain",
+  LB: "Lebanon",
+  IQ: "Iraq",
+  YE: "Yemen",
+  ZA: "South Africa",
+  GH: "Ghana",
+  ET: "Ethiopia",
+  UG: "Uganda",
+  RW: "Rwanda",
+  SN: "Senegal",
+  CI: "Ivory Coast",
+  DZ: "Algeria",
+  TN: "Tunisia",
+  MG: "Madagascar",
+  MW: "Malawi",
+  MZ: "Mozambique",
+  AZ: "Azerbaijan",
+  RS: "Serbia",
+  KR: "South Korea",
+  MN: "Mongolia",
 };
 
 // ============================================================================
@@ -114,29 +154,54 @@ export const COUNTRY_CODES = [
   { code: "AE", name: "United Arab Emirates", dialCode: "+971" },
   { code: "KE", name: "Kenya", dialCode: "+254" },
   { code: "TZ", name: "Tanzania", dialCode: "+255" },
+  { code: "PT", name: "Portugal", dialCode: "+351" },
+  { code: "FR", name: "France", dialCode: "+33" },
+  { code: "DE", name: "Germany", dialCode: "+49" },
+  { code: "IT", name: "Italy", dialCode: "+39" },
+  { code: "GB", name: "United Kingdom", dialCode: "+44" },
+  { code: "NL", name: "Netherlands", dialCode: "+31" },
+  { code: "PL", name: "Poland", dialCode: "+48" },
+  { code: "GR", name: "Greece", dialCode: "+30" },
+  { code: "AT", name: "Austria", dialCode: "+43" },
+  { code: "CH", name: "Switzerland", dialCode: "+41" },
+  { code: "GT", name: "Guatemala", dialCode: "+502" },
+  { code: "PA", name: "Panama", dialCode: "+507" },
+  { code: "NI", name: "Nicaragua", dialCode: "+505" },
+  { code: "DO", name: "Dominican Republic", dialCode: "+1" },
+  { code: "UY", name: "Uruguay", dialCode: "+598" },
+  { code: "PY", name: "Paraguay", dialCode: "+595" },
+  { code: "BO", name: "Bolivia", dialCode: "+591" },
+  { code: "JO", name: "Jordan", dialCode: "+962" },
+  { code: "QA", name: "Qatar", dialCode: "+974" },
+  { code: "KW", name: "Kuwait", dialCode: "+965" },
+  { code: "BH", name: "Bahrain", dialCode: "+973" },
+  { code: "LB", name: "Lebanon", dialCode: "+961" },
+  { code: "IQ", name: "Iraq", dialCode: "+964" },
+  { code: "YE", name: "Yemen", dialCode: "+967" },
+  { code: "ZA", name: "South Africa", dialCode: "+27" },
+  { code: "GH", name: "Ghana", dialCode: "+233" },
+  { code: "ET", name: "Ethiopia", dialCode: "+251" },
+  { code: "UG", name: "Uganda", dialCode: "+256" },
+  { code: "RW", name: "Rwanda", dialCode: "+250" },
+  { code: "SN", name: "Senegal", dialCode: "+221" },
+  { code: "CI", name: "Ivory Coast", dialCode: "+225" },
+  { code: "DZ", name: "Algeria", dialCode: "+213" },
+  { code: "TN", name: "Tunisia", dialCode: "+216" },
+  { code: "MG", name: "Madagascar", dialCode: "+261" },
+  { code: "MW", name: "Malawi", dialCode: "+265" },
+  { code: "MZ", name: "Mozambique", dialCode: "+258" },
+  { code: "AZ", name: "Azerbaijan", dialCode: "+994" },
+  { code: "RS", name: "Serbia", dialCode: "+381" },
+  { code: "KR", name: "South Korea", dialCode: "+82" },
+  { code: "MN", name: "Mongolia", dialCode: "+976" },
 ];
 
 // ============================================================================
-// Country Options for Manual Testing (Commonly Used Subset)
+// Country Options for Manual Testing (All Countries)
 // ============================================================================
 
-// Common countries for quick manual testing dropdown
-export const MANUAL_TEST_COUNTRIES = COUNTRY_CODES.filter((country) =>
-  [
-    "US",
-    "BR",
-    "MX",
-    "CO",
-    "CR",
-    "ES",
-    "CA",
-    "BE",
-    "BJ",
-    "OM",
-    "SG",
-    "MY",
-  ].includes(country.code)
-);
+// All countries available for manual testing dropdown
+export const MANUAL_TEST_COUNTRIES = COUNTRY_CODES;
 
 // ============================================================================
 // Forceful Testing Configuration (All Countries)
@@ -210,6 +275,7 @@ export const TABS = {
   OVERVIEW: "overview",
   VALID: "valid",
   INVALID: "invalid",
+  FORCEFUL: "forceful",
   MANUAL: "manual",
 };
 

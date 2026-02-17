@@ -1,10 +1,11 @@
 "use client";
 
 import { useState } from "react";
-import { TABS } from "../utils/constants";
+import { TABS, VALIDATION_METHOD_FILTERS } from "../utils/constants";
 import { usePhoneFilters } from "../hooks/usePhoneFilters";
 import { useManualTest } from "../hooks/useManualTest";
 import { useDetailsModal } from "../hooks/useDetailsModal";
+import { filterNumbers } from "../utils/filters";
 import StatsCards from "./dashboard/StatsCards";
 import TabNavigation from "./dashboard/TabNavigation";
 import OverviewTab from "./dashboard/OverviewTab";
@@ -15,6 +16,16 @@ import NumberDetailsModal from "./dashboard/NumberDetailsModal";
 export default function Dashboard({ data, onReset }) {
   const [activeTab, setActiveTab] = useState(TABS.OVERVIEW);
 
+  // Separate forceful validation results from regular valid numbers
+  const forcefulNumbers = data.valid_numbers.filter(
+    (n) => n.validationMethod === "forceful"
+  );
+  const regularValidNumbers = data.valid_numbers.filter(
+    (n) => n.validationMethod !== "forceful"
+  );
+  const forcefulCount = forcefulNumbers.length;
+  const regularValidCount = regularValidNumbers.length;
+
   const {
     searchTerm,
     setSearchTerm,
@@ -24,7 +35,7 @@ export default function Dashboard({ data, onReset }) {
     setInvalidFilter,
     validFiltered,
     invalidFiltered,
-  } = usePhoneFilters(data.valid_numbers, data.invalid_numbers);
+  } = usePhoneFilters(regularValidNumbers, data.invalid_numbers);
 
   const { manualTestResult, testLoading, handleTestPhone } = useManualTest();
 
@@ -35,14 +46,10 @@ export default function Dashboard({ data, onReset }) {
     handleCloseModal,
   } = useDetailsModal();
 
-  const forcefulCount = data.invalid_numbers.filter((n) =>
-    n.error?.toLowerCase().includes("forceful testing")
-  ).length;
-  const fullyInvalidCount = data.invalid_numbers.length - forcefulCount;
-
   const tabs = [
     { id: TABS.OVERVIEW, label: "Overview" },
-    { id: TABS.VALID, label: `Valid (${data.valid_count})` },
+    { id: TABS.VALID, label: `Valid (${regularValidCount})` },
+    { id: TABS.FORCEFUL, label: `⚠️ Forceful (${forcefulCount})` },
     { id: TABS.INVALID, label: `Invalid (${data.invalid_count})` },
     { id: TABS.MANUAL, label: "🔢 Manual Test" },
   ];
@@ -89,11 +96,30 @@ export default function Dashboard({ data, onReset }) {
             onValidationMethodFilterChange={setValidationMethodFilter}
             invalidFilter={invalidFilter}
             onInvalidFilterChange={setInvalidFilter}
-            validNumbers={data.valid_numbers}
+            validNumbers={regularValidNumbers}
             invalidNumbers={data.invalid_numbers}
-            forcefulCount={forcefulCount}
-            fullyInvalidCount={fullyInvalidCount}
+            forcefulCount={0}
+            fullyInvalidCount={data.invalid_numbers.length}
             onViewDetails={handleViewDetails}
+          />
+        )}
+
+        {activeTab === TABS.FORCEFUL && (
+          <PhoneNumbersTable
+            activeTab={TABS.VALID}
+            numbers={filterNumbers(forcefulNumbers, searchTerm)}
+            searchTerm={searchTerm}
+            onSearchChange={setSearchTerm}
+            validationMethodFilter={VALIDATION_METHOD_FILTERS.ALL}
+            onValidationMethodFilterChange={() => {}}
+            invalidFilter="all"
+            onInvalidFilterChange={() => {}}
+            validNumbers={forcefulNumbers}
+            invalidNumbers={[]}
+            forcefulCount={0}
+            fullyInvalidCount={0}
+            onViewDetails={handleViewDetails}
+            isForcefulTab={true}
           />
         )}
 

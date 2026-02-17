@@ -49,7 +49,6 @@ public class CSVParser implements DataParser {
         
         // Parse data rows
         int rowNumber = 0;
-        int skippedCount = 0;
         
         for (int i = 1; i < csvRecords.size(); i++) {
             String record = csvRecords.get(i).trim();
@@ -64,8 +63,6 @@ public class CSVParser implements DataParser {
                 PhoneRecord phoneRecord = parseCSVRow(rowNumber, record, columnIndex);
                 if (phoneRecord != null) {
                     records.add(phoneRecord);
-                } else {
-                    skippedCount++;
                 }
             } catch (Exception e) {
                 System.err.println("⚠️  Warning: Failed to parse row " + rowNumber + ": " + e.getMessage());
@@ -73,9 +70,6 @@ public class CSVParser implements DataParser {
         }
         
         System.out.println("✅ Parsed " + records.size() + " phone records from CSV file");
-        if (skippedCount > 0) {
-            System.out.println("⚠️  Skipped " + skippedCount + " records (no phone number)");
-        }
         return new PhoneNumberData(records);
     }
     
@@ -248,9 +242,10 @@ public class CSVParser implements DataParser {
         String country = getValueAt(values, columnIndex.get("country"));
         String platform = getValueAt(values, columnIndex.get("platform"));
         
-        // Skip records without phone numbers
+        // Always create a record, even if phone number is missing - validator will mark it as invalid
+        // Use empty string instead of null for missing phone numbers to ensure it's processed
         if (phoneNumber == null || phoneNumber.isEmpty()) {
-            return null;
+            phoneNumber = "";
         }
         
         return new PhoneRecord(rowNumber, id, email, name, phoneNumber, country, platform, record);

@@ -70,6 +70,12 @@ public class SQLParser implements DataParser {
         String country = cleanValue(values.get(21));     // Column 21: country
         String platform = cleanValue(values.get(11));    // Column 22: platform
         
+        // Always create a record, even if phone number is missing - validator will mark it as invalid
+        // Use empty string instead of null for missing phone numbers to ensure it's processed
+        if (phoneNumber == null || phoneNumber.isEmpty()) {
+            phoneNumber = "";
+        }
+        
         return new PhoneRecord(rowNumber, id, email, name, phoneNumber, country, platform, fullStatement);
     }
     
