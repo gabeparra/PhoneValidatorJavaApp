@@ -14,6 +14,7 @@ public class CountryCodeUtil {
     static {
         // Initialize country codes map
         COUNTRY_CODES.put("ARGENTINA", "54");
+        COUNTRY_CODES.put("BAHAMAS", "1");
         COUNTRY_CODES.put("BANGLADESH", "880");
         COUNTRY_CODES.put("BRAZIL", "55");
         COUNTRY_CODES.put("CANADA", "1");
@@ -27,6 +28,7 @@ public class CountryCodeUtil {
         COUNTRY_CODES.put("ELSALVADOR", "503");
         COUNTRY_CODES.put("HONDURAS", "504");
         COUNTRY_CODES.put("INDIA", "91");
+        COUNTRY_CODES.put("INDONESIA", "62");
         COUNTRY_CODES.put("ISRAEL", "972");
         COUNTRY_CODES.put("KAZAKHSTAN", "7");
         COUNTRY_CODES.put("KYRGYZSTAN", "996");

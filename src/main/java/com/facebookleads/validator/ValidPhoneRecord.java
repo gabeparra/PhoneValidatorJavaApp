@@ -1,5 +1,8 @@
 package com.facebookleads.validator;
 
+import java.util.Collections;
+import java.util.List;
+
 /**
  * Represents a validated phone number with formatted outputs
  */
@@ -16,13 +19,22 @@ public class ValidPhoneRecord {
     private final String region;
     private final String type;
     private final String platform;
-    private final String validationMethod; 
-    private final String originalCountry; 
-    
+    private final String validationMethod;
+    private final String originalCountry;
+    private final List<String> originalColumnValues;
+
     public ValidPhoneRecord(int rowNumber, String id, String email, String name,
                            String originalPhoneNumber, String e164, String international,
                            String national, String countryCode, String region, String type, String platform,
-                           String validationMethod, String originalCountry) { 
+                           String validationMethod, String originalCountry) {
+        this(rowNumber, id, email, name, originalPhoneNumber, e164, international, national,
+                countryCode, region, type, platform, validationMethod, originalCountry, null);
+    }
+
+    public ValidPhoneRecord(int rowNumber, String id, String email, String name,
+                           String originalPhoneNumber, String e164, String international,
+                           String national, String countryCode, String region, String type, String platform,
+                           String validationMethod, String originalCountry, List<String> originalColumnValues) {
         this.rowNumber = rowNumber;
         this.id = id;
         this.email = email;
@@ -35,10 +47,11 @@ public class ValidPhoneRecord {
         this.region = region;
         this.type = type;
         this.platform = platform;
-        this.validationMethod = validationMethod; 
+        this.validationMethod = validationMethod;
         this.originalCountry = originalCountry;
+        this.originalColumnValues = originalColumnValues == null ? null : Collections.unmodifiableList(originalColumnValues);
     }
-    
+
     // Getters
     public int getRowNumber() { return rowNumber; }
     public String getId() { return id; }
@@ -52,6 +65,7 @@ public class ValidPhoneRecord {
     public String getRegion() { return region; }
     public String getType() { return type; }
     public String getPlatform() { return platform; }
-    public String getValidationMethod() { return validationMethod; } 
+    public String getValidationMethod() { return validationMethod; }
     public String getOriginalCountry() { return originalCountry; }
+    public List<String> getOriginalColumnValues() { return originalColumnValues; }
 }

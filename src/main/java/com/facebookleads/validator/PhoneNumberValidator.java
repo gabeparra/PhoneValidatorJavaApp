@@ -16,7 +16,7 @@ public class PhoneNumberValidator {
     // Map country names to ISO region codes
     private static final Map<String, String> COUNTRY_TO_REGION = new HashMap<>();
 
-    // All country codes for forceful testing (Step 4)
+    // All country codes for forceful testing (Step 4 – last resort)
     private static final String[] FORCEFUL_TEST_REGIONS = {
             "US", "BR", "MX", "CO", "CR", "ES", "CA", "AR",
             "BD", "BE", "BJ", "CL", "CN", "EC", "EG", "SV",
@@ -24,7 +24,7 @@ public class PhoneNumberValidator {
             "NG", "OM", "PK", "PE", "RU", "SA", "SG", "TR",
             "UZ", "VE", "VN", "ZM", "AE", "TZ", "PT", "FR",
             "DE", "IT", "GB", "NL", "PL", "GR", "AT", "CH",
-            "GT", "PA", "NI", "DO", "UY", "PY", "BO", "JO",
+            "GT", "PA", "NI", "DO", "UY", "PY", "BO", "BS", "JO", "ID",
             "QA", "KW", "BH", "LB", "IQ", "YE", "ZA", "GH",
             "ET", "UG", "RW", "SN", "CI", "DZ", "TN", "MG",
             "MW", "MZ", "AZ", "RS", "KR", "MN"
@@ -32,6 +32,7 @@ public class PhoneNumberValidator {
 
     static {
         COUNTRY_TO_REGION.put("ARGENTINA", "AR");
+        COUNTRY_TO_REGION.put("BAHAMAS", "BS");
         COUNTRY_TO_REGION.put("BANGLADESH", "BD");
         COUNTRY_TO_REGION.put("BRAZIL", "BR");
         COUNTRY_TO_REGION.put("CANADA", "CA");
@@ -45,6 +46,7 @@ public class PhoneNumberValidator {
         COUNTRY_TO_REGION.put("ELSALVADOR", "SV");
         COUNTRY_TO_REGION.put("HONDURAS", "HN");
         COUNTRY_TO_REGION.put("INDIA", "IN");
+        COUNTRY_TO_REGION.put("INDONESIA", "ID");
         COUNTRY_TO_REGION.put("ISRAEL", "IL");
         COUNTRY_TO_REGION.put("KAZAKHSTAN", "KZ");
         COUNTRY_TO_REGION.put("KYRGYZSTAN", "KG");
@@ -137,6 +139,7 @@ public class PhoneNumberValidator {
         COUNTRY_TO_REGION.put("SV", "SV");
         COUNTRY_TO_REGION.put("HN", "HN");
         COUNTRY_TO_REGION.put("IN", "IN");
+        COUNTRY_TO_REGION.put("ID", "ID");
         COUNTRY_TO_REGION.put("IL", "IL");
         COUNTRY_TO_REGION.put("KZ", "KZ");
         COUNTRY_TO_REGION.put("KG", "KG");
@@ -178,6 +181,7 @@ public class PhoneNumberValidator {
         COUNTRY_TO_REGION.put("UY", "UY");
         COUNTRY_TO_REGION.put("PY", "PY");
         COUNTRY_TO_REGION.put("BO", "BO");
+        COUNTRY_TO_REGION.put("BS", "BS");
         COUNTRY_TO_REGION.put("JO", "JO");
         COUNTRY_TO_REGION.put("QA", "QA");
         COUNTRY_TO_REGION.put("KW", "KW");
@@ -233,7 +237,8 @@ public class PhoneNumberValidator {
                         phoneNumberStr,
                         "Empty or NULL phone number",
                         record.getPlatform(),
-                        countryHint));
+                        countryHint,
+                        record.getOriginalColumnValues()));
                 continue;
             }
 
@@ -247,73 +252,50 @@ public class PhoneNumberValidator {
                 PhoneNumber validPhoneNumber = null;
                 String validationMethod = null;
 
-                // Step 1: If country hint exists, check if number matches that country
+                // Order: 1) country from form, 2) original format, 3) +1 fallback, 4) forceful
+
+                // Step 1: Country from form – try form country first so e.g. 525407802 + Chile → +56525407802
                 if (detectedRegion != null) {
-                    // Get the expected country code for this region
                     int expectedCountryCode = phoneUtil.getCountryCodeForRegion(detectedRegion);
                     String phoneToTest = originalPhoneNumber;
-
-                    // Strip leading + if present
                     if (phoneToTest.startsWith("+")) {
                         phoneToTest = phoneToTest.substring(1);
                     }
-
                     String countryCodeStr = String.valueOf(expectedCountryCode);
 
-                    // Attempt 1: Try parsing as-is with the region to check if it matches
-                    try {
-                        PhoneNumber phoneNumber = phoneUtil.parse(phoneToTest, detectedRegion);
-                        if (phoneUtil.isValidNumber(phoneNumber)) {
-                            // Check if the detected region matches the expected region
-                            String detectedRegionFromNumber = phoneUtil.getRegionCodeForNumber(phoneNumber);
-                            if (detectedRegion.equals(detectedRegionFromNumber)) {
-                                isValid = true;
-                                validPhoneNumber = phoneNumber;
-                                validationMethod = "country_code";
-                            }
+                    // 1a: Parse as E.164 with form country (prepend CC if needed; avoids mis-detection as Egypt/Mexico etc.)
+                    String e164ToTry = null;
+                    if (phoneToTest.startsWith(countryCodeStr)) {
+                        e164ToTry = "+" + phoneToTest;
+                    } else {
+                        int expectedTotalLength = countryCodeStr.length() + 9;
+                        String testWithCountryCode = countryCodeStr + phoneToTest;
+                        if (testWithCountryCode.length() >= expectedTotalLength + 1 && phoneToTest.length() > 9) {
+                            String shortened = phoneToTest.substring(1);
+                            testWithCountryCode = countryCodeStr + shortened;
                         }
-                    } catch (NumberParseException e) {
-                        // Number doesn't match the declared country, continue to step 2
+                        if (testWithCountryCode.length() <= expectedTotalLength + 2) {
+                            e164ToTry = "+" + testWithCountryCode;
+                        }
+                    }
+                    if (e164ToTry != null) {
+                        try {
+                            PhoneNumber phoneNumber = phoneUtil.parse(e164ToTry, null);
+                            if (phoneUtil.isValidNumber(phoneNumber)) {
+                                String detectedRegionFromNumber = phoneUtil.getRegionCodeForNumber(phoneNumber);
+                                if (detectedRegion.equals(detectedRegionFromNumber)) {
+                                    isValid = true;
+                                    validPhoneNumber = phoneNumber;
+                                    validationMethod = "country_code";
+                                }
+                            }
+                        } catch (NumberParseException e) {
+                            // continue to 1b
+                        }
                     }
 
-                    // If number doesn't match the declared country, try forcing the country code
+                    // 1b: Parse as national format with form region
                     if (!isValid) {
-
-                        // Step 2: Force the country code onto the number
-                        // Try adding country code prefix if number doesn't already have it
-                        if (!phoneToTest.startsWith(countryCodeStr)) {
-                            // Check if adding country code would create a reasonable length
-                            int expectedTotalLength = countryCodeStr.length() + 9; // Adjust per country if needed
-                            String testWithCountryCode = countryCodeStr + phoneToTest;
-
-                            // If the number is too long, try removing leading digits that might be area code
-                            if (testWithCountryCode.length() >= expectedTotalLength + 1) {
-                                // Try removing first digit (might be area code prefix)
-                                if (phoneToTest.length() > 9) {
-                                    String shortened = phoneToTest.substring(1);
-                                    testWithCountryCode = countryCodeStr + shortened;
-                                }
-                            }
-
-                            if (testWithCountryCode.length() <= expectedTotalLength + 2) { // Allow some flexibility
-                                try {
-                                    PhoneNumber phoneNumber = phoneUtil.parse("+" + testWithCountryCode, null);
-                                    if (phoneUtil.isValidNumber(phoneNumber)) {
-                                        // Verify it matches the expected region
-                                        String detectedRegionFromNumber = phoneUtil.getRegionCodeForNumber(phoneNumber);
-                                        if (detectedRegion.equals(detectedRegionFromNumber)) {
-                                            isValid = true;
-                                            validPhoneNumber = phoneNumber;
-                                            validationMethod = "country_code";
-                                        }
-                                    }
-                                } catch (NumberParseException e) {
-                                    // Continue to step 3
-                                }
-                            }
-                        }
-
-                        // Also try parsing as national format with the region
                         try {
                             PhoneNumber phoneNumber = phoneUtil.parse(phoneToTest, detectedRegion);
                             if (phoneUtil.isValidNumber(phoneNumber)) {
@@ -325,12 +307,32 @@ public class PhoneNumberValidator {
                                 }
                             }
                         } catch (NumberParseException e) {
-                            // Continue to step 3
+                            // continue to 1c for Egypt
+                        }
+                    }
+
+                    // 1c: Egypt-specific – 9-digit numbers often need leading 0 (national) or 1 (mobile 10/11/12/15)
+                    if (!isValid && "EG".equals(detectedRegion) && phoneToTest.length() == 9 && phoneToTest.matches("\\d{9}")) {
+                        for (String prefix : new String[] { "0", "1" }) {
+                            try {
+                                PhoneNumber phoneNumber = phoneUtil.parse(prefix + phoneToTest, detectedRegion);
+                                if (phoneUtil.isValidNumber(phoneNumber)) {
+                                    String detectedRegionFromNumber = phoneUtil.getRegionCodeForNumber(phoneNumber);
+                                    if (detectedRegion.equals(detectedRegionFromNumber)) {
+                                        isValid = true;
+                                        validPhoneNumber = phoneNumber;
+                                        validationMethod = "country_code";
+                                        break;
+                                    }
+                                }
+                            } catch (NumberParseException e) {
+                                // try next prefix
+                            }
                         }
                     }
                 }
 
-                // Step 3: Try the phone number without any changes (auto-detect)
+                // Step 2: Original format (with + prefix, auto-detect)
                 if (!isValid) {
                     try {
                         String attempt1 = originalPhoneNumber.startsWith("+")
@@ -344,11 +346,11 @@ public class PhoneNumberValidator {
                             validationMethod = "original";
                         }
                     } catch (NumberParseException e) {
-                        // Continue to step 4
+                        // continue to step 3
                     }
                 }
 
-                // Step 4: Try with US as fallback
+                // Step 3: +1 (US) fallback
                 if (!isValid) {
                     try {
                         PhoneNumber phoneNumber = phoneUtil.parse(originalPhoneNumber, "US");
@@ -358,11 +360,11 @@ public class PhoneNumberValidator {
                             validationMethod = "us_fallback";
                         }
                     } catch (NumberParseException e) {
-                        // Continue to step 5
+                        // continue to step 4
                     }
                 }
 
-                // Step 5: Forceful testing - try ALL country codes with multiple formats
+                // Step 4: Forceful – try all supported country codes (last resort)
                 if (!isValid) {
                     for (String region : FORCEFUL_TEST_REGIONS) {
                         int regionCountryCode = phoneUtil.getCountryCodeForRegion(region);
@@ -447,6 +449,22 @@ public class PhoneNumberValidator {
                                     // Continue to next region
                                 }
                             }
+                            // Egypt: 9-digit numbers may need leading 0 (national) or 1 (mobile)
+                            if (!isValid && region.equals("EG") && nationalFormat.matches("\\d{9}")) {
+                                for (String prefix : new String[] { "0", "1" }) {
+                                    try {
+                                        PhoneNumber phoneNumber = phoneUtil.parse(prefix + nationalFormat, region);
+                                        if (phoneUtil.isValidNumber(phoneNumber)) {
+                                            isValid = true;
+                                            validPhoneNumber = phoneNumber;
+                                            validationMethod = "forceful";
+                                            break;
+                                        }
+                                    } catch (NumberParseException e) {
+                                        // try next prefix
+                                    }
+                                }
+                            }
                         }
 
                         // Try format 4: Add country code prefix ONLY if it makes sense length-wise
@@ -509,9 +527,9 @@ public class PhoneNumberValidator {
                                     numberType,
                                     record.getPlatform(),
                                     "forceful",
-                                    countryHint));
+                                    countryHint,
+                                    record.getOriginalColumnValues()));
                         } else {
-                            // Not a supported country - mark as invalid
                             invalidNumbers.add(new InvalidPhoneRecord(
                                     record.getRowNumber(),
                                     record.getId(),
@@ -522,7 +540,8 @@ public class PhoneNumberValidator {
                                             regionCode,
                                             phoneUtil.format(validPhoneNumber, PhoneNumberFormat.E164)),
                                     record.getPlatform(),
-                                    countryHint));
+                                    countryHint,
+                                    record.getOriginalColumnValues()));
                         }
                     } else {
                         // Valid number through normal validation
@@ -540,10 +559,10 @@ public class PhoneNumberValidator {
                                 numberType,
                                 record.getPlatform(),
                                 validationMethod,
-                                countryHint));
+                                countryHint,
+                                record.getOriginalColumnValues()));
                     }
                 } else {
-                    // Invalid for all attempted methods
                     String errorMsg = detectedRegion != null
                             ? "Number is not valid (tried: auto-detect, " + detectedRegion + ", US, forceful)"
                             : "Number is not valid (tried: auto-detect, US, forceful)";
@@ -556,11 +575,11 @@ public class PhoneNumberValidator {
                             originalPhoneNumber,
                             errorMsg,
                             record.getPlatform(),
-                            countryHint));
+                            countryHint,
+                            record.getOriginalColumnValues()));
                 }
 
             } catch (Exception e) {
-                // Catch any other unexpected exceptions
                 invalidNumbers.add(new InvalidPhoneRecord(
                         record.getRowNumber(),
                         record.getId(),
@@ -569,7 +588,8 @@ public class PhoneNumberValidator {
                         phoneNumberStr,
                         "Unexpected error: " + e.getMessage(),
                         record.getPlatform(),
-                        countryHint));
+                        countryHint,
+                        record.getOriginalColumnValues()));
             }
         }
 
@@ -581,7 +601,7 @@ public class PhoneNumberValidator {
         System.out.println("   Valid: " + validNumbers.size());
         System.out.println("   Invalid: " + invalidNumbers.size());
 
-        return new ValidationResult(validNumbers, invalidNumbers);
+        return new ValidationResult(validNumbers, invalidNumbers, data.getOriginalColumnNames());
     }
 
     /**

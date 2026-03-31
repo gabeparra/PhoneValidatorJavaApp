@@ -106,6 +106,7 @@ class ValidationResponse(BaseModel):
     invalid_numbers: List[PhoneNumber]
     country_breakdown: dict
     timestamp: str
+    original_column_names: Optional[List[str]] = None
 
 class ManualPhoneRequest(BaseModel):
     phone: str
@@ -338,7 +339,8 @@ async def validate_phone_manual(
             valid_numbers=valid_numbers,
             invalid_numbers=invalid_numbers,
             country_breakdown=summary.get("valid_by_country", {}),
-            timestamp=summary.get("timestamp", datetime.now().isoformat())
+            timestamp=summary.get("timestamp", datetime.now().isoformat()),
+            original_column_names=summary.get("original_column_names"),
         )
     
     except subprocess.TimeoutExpired:
@@ -480,4 +482,4 @@ async def get_stats():
 
 if __name__ == "__main__":
     import uvicorn
-    uvicorn.run(app, host="0.0.0.0", port=8000)
+    uvicorn.run(app, host="127.0.0.1", port=8000)

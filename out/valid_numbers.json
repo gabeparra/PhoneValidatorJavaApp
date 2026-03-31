@@ -1,0 +1,50 @@
+[
+  {
+    "rowNumber": 1,
+    "id": "1",
+    "email": "a@b.com",
+    "name": "John Doe",
+    "originalPhoneNumber": "+15551234567",
+    "e164": "+555551234567",
+    "international": "+55 55 5123-4567",
+    "national": "(55) 5123-4567",
+    "countryCode": "+55",
+    "region": "BR",
+    "type": "FIXED_LINE",
+    "platform": null,
+    "validationMethod": "forceful",
+    "originalCountry": "US",
+    "originalColumnValues": [
+      "1",
+      "a@b.com",
+      "John",
+      "Doe",
+      "+15551234567",
+      "US"
+    ]
+  },
+  {
+    "rowNumber": 2,
+    "id": "2",
+    "email": "b@c.com",
+    "name": "Jane Smith",
+    "originalPhoneNumber": "525407802",
+    "e164": "+201525407802",
+    "international": "+20 15 25407802",
+    "national": "015 25407802",
+    "countryCode": "+20",
+    "region": "EG",
+    "type": "MOBILE",
+    "platform": null,
+    "validationMethod": "country_code",
+    "originalCountry": "Egypt",
+    "originalColumnValues": [
+      "2",
+      "b@c.com",
+      "Jane",
+      "Smith",
+      "525407802",
+      "Egypt"
+    ]
+  }
+]

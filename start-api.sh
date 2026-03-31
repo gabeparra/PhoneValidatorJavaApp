@@ -113,7 +113,7 @@ echo ""
 echo -e "${BLUE}🚀 Starting API on port 8000...${NC}"
 cd "$PROJECT_ROOT"
 source venv/bin/activate
-uvicorn api.main:app --host 0.0.0.0 --port 8000 > logs/api.log 2>&1 &
+uvicorn api.main:app --host 127.0.0.1 --port 8000 > logs/api.log 2>&1 &
 API_PID=$!
 echo -e "${GREEN}✓ API started (PID: $API_PID)${NC}"
 

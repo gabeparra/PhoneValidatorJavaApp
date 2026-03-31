@@ -130,7 +130,8 @@ def process_validation_job(input_file_path: str) -> Dict[str, Any]:
             'invalid_numbers': invalid_numbers,
             'country_breakdown': summary.get("valid_by_country", {}),
             'timestamp': summary.get("timestamp", datetime.now().isoformat()),
-            'completed_at': datetime.now().isoformat()
+            'completed_at': datetime.now().isoformat(),
+            'original_column_names': summary.get("original_column_names"),
         }
         
         # Update job metadata

@@ -330,7 +330,7 @@ Create `.env` file in project root (optional):
 ```bash
 # API Configuration
 API_PORT=8000
-API_HOST=0.0.0.0
+API_HOST=127.0.0.1
 
 # Frontend Configuration
 NEXT_PUBLIC_API_URL=http://localhost:8000

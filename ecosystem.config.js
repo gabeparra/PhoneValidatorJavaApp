@@ -3,7 +3,7 @@ module.exports = {
     {
         name: 'phone-validator-api',
         script: '/home/ubuntu/PhoneValidatorJavaApp/venv/bin/python',
-        args: '-m uvicorn api.main:app --host 0.0.0.0 --port 8000',
+        args: '-m uvicorn api.main:app --host 127.0.0.1 --port 8000',
         cwd: '/home/ubuntu/PhoneValidatorJavaApp',
         env: {
             PATH: '/home/ubuntu/PhoneValidatorJavaApp/venv/bin:$PATH'
@@ -19,8 +19,8 @@ module.exports = {
     },
     {
         name: 'phone-validator-queue-worker',
-        script: '/home/ubuntu/PhoneValidatorJavaApp/start_rq_worker.py',
-        interpreter: '/home/ubuntu/PhoneValidatorJavaApp/venv/bin/python3',
+        script: '/home/ubuntu/PhoneValidatorJavaApp/venv/bin/python3',
+        args: '/home/ubuntu/PhoneValidatorJavaApp/start_rq_worker.py',
         exec_mode: 'fork',
         cwd: '/home/ubuntu/PhoneValidatorJavaApp',
         env: {

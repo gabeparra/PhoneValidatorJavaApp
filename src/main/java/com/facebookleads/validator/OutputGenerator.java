@@ -63,6 +63,9 @@ public class OutputGenerator {
         summary.put("valid_count", result.getValidCount());
         summary.put("invalid_count", result.getInvalidCount());
         summary.put("success_rate", String.format("%.2f%%", result.getSuccessRate()));
+        if (result.getOriginalColumnNames() != null && !result.getOriginalColumnNames().isEmpty()) {
+            summary.put("original_column_names", result.getOriginalColumnNames());
+        }
 
         // Count by country for valid numbers
         Map<String, Integer> countryStats = new TreeMap<>();
@@ -78,39 +81,81 @@ public class OutputGenerator {
     }
 
     /**
-     * Generate CSV output files
+     * Generate CSV output files.
+     * When original columns are present (from CSV/Excel), exports original columns first, then validation columns.
      */
     private void generateCSV(ValidationResult result) throws IOException {
+        List<String> origCols = result.getOriginalColumnNames();
+        boolean hasOriginalColumns = origCols != null && !origCols.isEmpty();
+
         // Valid numbers CSV
         try (FileWriter writer = new FileWriter(outputDir + "/valid_numbers.csv")) {
-            writer.append(
-                    "Row,ID,Name,Email,Original Number,E.164,International,National,Country Code,Region,Type,Platform\n");
+            if (hasOriginalColumns) {
+                writer.append("Row,");
+                for (int i = 0; i < origCols.size(); i++) {
+                    if (i > 0) writer.append(",");
+                    writer.append(escapeCSV(origCols.get(i)));
+                }
+                writer.append(",E.164,International,National,Country Code,Region,Type,Validation Method,Platform\n");
+            } else {
+                writer.append("Row,ID,Name,Email,Original Number,E.164,International,National,Country Code,Region,Type,Platform\n");
+            }
             for (ValidPhoneRecord record : result.getValidNumbers()) {
-                writer.append(String.valueOf(record.getRowNumber())).append(",")
-                        .append(escapeCSV(record.getId())).append(",")
-                        .append(escapeCSV(record.getName())).append(",")
-                        .append(escapeCSV(record.getEmail())).append(",")
-                        .append(escapeCSV(record.getOriginalPhoneNumber())).append(",")
-                        .append(escapeCSV(record.getE164())).append(",")
+                writer.append(String.valueOf(record.getRowNumber())).append(",");
+                if (hasOriginalColumns) {
+                    List<String> vals = record.getOriginalColumnValues();
+                    for (int i = 0; i < origCols.size(); i++) {
+                        if (i > 0) writer.append(",");
+                        writer.append(escapeCSV(vals != null && i < vals.size() ? vals.get(i) : ""));
+                    }
+                    writer.append(",");
+                } else {
+                    writer.append(escapeCSV(record.getId())).append(",")
+                            .append(escapeCSV(record.getName())).append(",")
+                            .append(escapeCSV(record.getEmail())).append(",")
+                            .append(escapeCSV(record.getOriginalPhoneNumber())).append(",");
+                }
+                writer.append(escapeCSV(record.getE164())).append(",")
                         .append(escapeCSV(record.getInternational())).append(",")
                         .append(escapeCSV(record.getNational())).append(",")
                         .append(escapeCSV(record.getCountryCode())).append(",")
                         .append(escapeCSV(record.getRegion())).append(",")
-                        .append(escapeCSV(record.getType())).append(",")
-                        .append(escapeCSV(record.getPlatform())).append("\n");
+                        .append(escapeCSV(record.getType())).append(",");
+                if (hasOriginalColumns) {
+                    writer.append(escapeCSV(record.getValidationMethod())).append(",");
+                }
+                writer.append(escapeCSV(record.getPlatform())).append("\n");
             }
         }
 
         // Invalid numbers CSV
         try (FileWriter writer = new FileWriter(outputDir + "/invalid_numbers.csv")) {
-            writer.append("Row,ID,Name,Email,Original Number,Error,Platform\n");
+            if (hasOriginalColumns) {
+                writer.append("Row,");
+                for (int i = 0; i < origCols.size(); i++) {
+                    if (i > 0) writer.append(",");
+                    writer.append(escapeCSV(origCols.get(i)));
+                }
+                writer.append(",Error,Platform\n");
+            } else {
+                writer.append("Row,ID,Name,Email,Original Number,Error,Platform\n");
+            }
             for (InvalidPhoneRecord record : result.getInvalidNumbers()) {
-                writer.append(String.valueOf(record.getRowNumber())).append(",")
-                        .append(escapeCSV(record.getId())).append(",")
-                        .append(escapeCSV(record.getName())).append(",")
-                        .append(escapeCSV(record.getEmail())).append(",")
-                        .append(escapeCSV(record.getOriginalPhoneNumber())).append(",")
-                        .append(escapeCSV(record.getError())).append(",")
+                writer.append(String.valueOf(record.getRowNumber())).append(",");
+                if (hasOriginalColumns) {
+                    List<String> vals = record.getOriginalColumnValues();
+                    for (int i = 0; i < origCols.size(); i++) {
+                        if (i > 0) writer.append(",");
+                        writer.append(escapeCSV(vals != null && i < vals.size() ? vals.get(i) : ""));
+                    }
+                    writer.append(",");
+                } else {
+                    writer.append(escapeCSV(record.getId())).append(",")
+                            .append(escapeCSV(record.getName())).append(",")
+                            .append(escapeCSV(record.getEmail())).append(",")
+                            .append(escapeCSV(record.getOriginalPhoneNumber())).append(",");
+                }
+                writer.append(escapeCSV(record.getError())).append(",")
                         .append(escapeCSV(record.getPlatform())).append("\n");
             }
         }

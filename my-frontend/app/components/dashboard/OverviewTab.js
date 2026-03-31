@@ -66,10 +66,10 @@ export default function OverviewTab({ data }) {
                       status: "invalid",
                     })),
                   ];
-                  downloadCSV(
-                    allNumbers,
-                    generateDownloadFilename("all_numbers", ".csv")
-                  );
+                  downloadCSV(allNumbers, generateDownloadFilename("all_numbers", ".csv"), {
+                    originalColumnNames: data.original_column_names ?? [],
+                    type: "all",
+                  });
                 }}
                 className="w-full bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700 transition-colors"
               >
@@ -93,10 +93,10 @@ export default function OverviewTab({ data }) {
               </button>
               <button
                 onClick={() =>
-                  downloadCSV(
-                    data.valid_numbers,
-                    generateDownloadFilename("valid_numbers", ".csv")
-                  )
+                  downloadCSV(data.valid_numbers, generateDownloadFilename("valid_numbers", ".csv"), {
+                    originalColumnNames: data.original_column_names ?? [],
+                    type: "valid",
+                  })
                 }
                 className="flex-1 bg-green-600 text-white px-4 py-2 rounded hover:bg-green-700 transition-colors"
               >
@@ -120,10 +120,10 @@ export default function OverviewTab({ data }) {
               </button>
               <button
                 onClick={() =>
-                  downloadCSV(
-                    data.invalid_numbers,
-                    generateDownloadFilename("invalid_numbers", ".csv")
-                  )
+                  downloadCSV(data.invalid_numbers, generateDownloadFilename("invalid_numbers", ".csv"), {
+                    originalColumnNames: data.original_column_names ?? [],
+                    type: "invalid",
+                  })
                 }
                 className="flex-1 bg-red-600 text-white px-4 py-2 rounded hover:bg-red-700 transition-colors"
               >

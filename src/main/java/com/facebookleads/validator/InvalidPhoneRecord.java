@@ -1,8 +1,10 @@
 package com.facebookleads.validator;
 
+import java.util.Collections;
+import java.util.List;
+
 /**
  * Represents an invalid phone number with error details
- * Now includes validation details for numbers that were technically valid but failed quality checks
  */
 public class InvalidPhoneRecord {
     private final int rowNumber;
@@ -13,8 +15,6 @@ public class InvalidPhoneRecord {
     private final String error;
     private final String platform;
     private final String originalCountry;
-    
-    // Additional fields for forceful validation failures
     private final String e164;
     private final String international;
     private final String national;
@@ -22,17 +22,32 @@ public class InvalidPhoneRecord {
     private final String region;
     private final String type;
     private final String validationMethod;
-    
+    private final List<String> originalColumnValues;
+
     public InvalidPhoneRecord(int rowNumber, String id, String email, String name,
                              String originalPhoneNumber, String error, String platform, String originalCountry) {
-        this(rowNumber, id, email, name, originalPhoneNumber, error, platform, originalCountry,
-             null, null, null, null, null, null, null);
+        this(rowNumber, id, email, name, originalPhoneNumber, error, platform, originalCountry, null);
     }
-    
+
+    public InvalidPhoneRecord(int rowNumber, String id, String email, String name,
+                             String originalPhoneNumber, String error, String platform, String originalCountry,
+                             List<String> originalColumnValues) {
+        this(rowNumber, id, email, name, originalPhoneNumber, error, platform, originalCountry,
+             null, null, null, null, null, null, null, originalColumnValues);
+    }
+
     public InvalidPhoneRecord(int rowNumber, String id, String email, String name,
                              String originalPhoneNumber, String error, String platform, String originalCountry,
                              String e164, String international, String national, String countryCode,
                              String region, String type, String validationMethod) {
+        this(rowNumber, id, email, name, originalPhoneNumber, error, platform, originalCountry,
+             e164, international, national, countryCode, region, type, validationMethod, null);
+    }
+
+    public InvalidPhoneRecord(int rowNumber, String id, String email, String name,
+                             String originalPhoneNumber, String error, String platform, String originalCountry,
+                             String e164, String international, String national, String countryCode,
+                             String region, String type, String validationMethod, List<String> originalColumnValues) {
         this.rowNumber = rowNumber;
         this.id = id;
         this.email = email;
@@ -48,8 +63,9 @@ public class InvalidPhoneRecord {
         this.region = region;
         this.type = type;
         this.validationMethod = validationMethod;
+        this.originalColumnValues = originalColumnValues == null ? null : Collections.unmodifiableList(originalColumnValues);
     }
-    
+
     // Getters
     public int getRowNumber() { return rowNumber; }
     public String getId() { return id; }
@@ -66,4 +82,5 @@ public class InvalidPhoneRecord {
     public String getRegion() { return region; }
     public String getType() { return type; }
     public String getValidationMethod() { return validationMethod; }
+    public List<String> getOriginalColumnValues() { return originalColumnValues; }
 }

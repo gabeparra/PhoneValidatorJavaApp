@@ -20,24 +20,28 @@ public class ExcelParser implements DataParser {
         int totalSheets = 0;
         int processedSheets = 0;
 
+        List<String> originalColumnNames = null;
+
         try (FileInputStream fis = new FileInputStream(filePath);
                 Workbook workbook = new XSSFWorkbook(fis)) {
 
             totalSheets = workbook.getNumberOfSheets();
             System.out.println("📑 Found " + totalSheets + " sheet(s) in workbook");
 
-            // Process each sheet
             for (int sheetIndex = 0; sheetIndex < totalSheets; sheetIndex++) {
                 Sheet sheet = workbook.getSheetAt(sheetIndex);
                 String sheetName = sheet.getSheetName();
-                
+
                 System.out.println();
                 System.out.println("━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━");
                 System.out.println("📄 Processing Sheet " + (sheetIndex + 1) + "/" + totalSheets + ": '" + sheetName + "'");
                 System.out.println("━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━");
 
-                List<PhoneRecord> sheetRecords = parseSheet(sheet, sheetIndex);
-                
+                if (sheetIndex == 0 && sheet.getPhysicalNumberOfRows() > 0 && sheet.getRow(0) != null) {
+                    originalColumnNames = getHeaderValues(sheet.getRow(0));
+                }
+                List<PhoneRecord> sheetRecords = parseSheet(sheet, sheetIndex, originalColumnNames);
+
                 if (sheetRecords.size() > 0) {
                     records.addAll(sheetRecords);
                     processedSheets++;
@@ -53,13 +57,25 @@ public class ExcelParser implements DataParser {
             System.out.println("━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━");
         }
 
-        return new PhoneNumberData(records);
+        return new PhoneNumberData(records, originalColumnNames);
+    }
+
+    /** Build ordered list of header cell values from the header row. */
+    private List<String> getHeaderValues(Row headerRow) {
+        List<String> names = new ArrayList<>();
+        if (headerRow == null) return names;
+        for (int i = 0; i < headerRow.getLastCellNum(); i++) {
+            Cell cell = headerRow.getCell(i);
+            names.add(cell != null ? (getCellValueAsString(cell) != null ? getCellValueAsString(cell) : "") : "");
+        }
+        return names;
     }
 
     /**
-     * Parse a single sheet and return its records
+     * Parse a single sheet and return its records.
+     * @param originalColumnNames header from first sheet (for export); may be null
      */
-    private List<PhoneRecord> parseSheet(Sheet sheet, int sheetIndex) {
+    private List<PhoneRecord> parseSheet(Sheet sheet, int sheetIndex, List<String> originalColumnNames) {
         List<PhoneRecord> records = new ArrayList<>();
 
         if (sheet.getPhysicalNumberOfRows() == 0) {
@@ -67,7 +83,6 @@ public class ExcelParser implements DataParser {
             return records;
         }
 
-        // Parse header row
         Row headerRow = sheet.getRow(sheet.getFirstRowNum());
         if (headerRow == null) {
             System.err.println("⚠️  Warning: Could not read header row");
@@ -115,7 +130,7 @@ public class ExcelParser implements DataParser {
 
             try {
                 rowNumber++;
-                PhoneRecord record = parseRow(rowNumber, row, columnIndex);
+                PhoneRecord record = parseRow(rowNumber, row, columnIndex, originalColumnNames);
                 if (record != null) {
                     records.add(record);
                 }
@@ -253,11 +268,10 @@ public class ExcelParser implements DataParser {
     /**
      * Parse a single Excel row
      */
-    private PhoneRecord parseRow(int rowNumber, Row row, Map<String, Integer> columnIndex) {
+    private PhoneRecord parseRow(int rowNumber, Row row, Map<String, Integer> columnIndex, List<String> originalColumnNames) {
         String id = getCellValue(row, columnIndex.get("id"));
         String email = getCellValue(row, columnIndex.get("email"));
 
-        // Get name - prefer full name, then combine first/last name
         String name = getCellValue(row, columnIndex.get("name"));
         if (name == null || name.isEmpty()) {
             String firstName = getCellValue(row, columnIndex.get("first_name"));
@@ -265,7 +279,6 @@ public class ExcelParser implements DataParser {
             name = combineName(firstName, lastName);
         }
 
-        // Get phone number - prefer regular phone, then US telephone, then foreign telephone
         String phoneNumber = getCellValue(row, columnIndex.get("phone_number"));
         if (phoneNumber == null || phoneNumber.isEmpty()) {
             phoneNumber = getCellValue(row, columnIndex.get("us_telephone"));
@@ -273,22 +286,31 @@ public class ExcelParser implements DataParser {
         if (phoneNumber == null || phoneNumber.isEmpty()) {
             phoneNumber = getCellValue(row, columnIndex.get("foreign_telephone"));
         }
-        
         phoneNumber = cleanPhoneNumber(phoneNumber);
         String country = getCellValue(row, columnIndex.get("country"));
         String platform = getCellValue(row, columnIndex.get("platform"));
 
-        // Create original line representation for reporting
         String originalLine = "Row " + (row.getRowNum() + 1);
-
-        // Always create a record, even if phone number is missing - validator will mark it as invalid
-        // Use empty string instead of null for missing phone numbers to ensure it's processed
         if (phoneNumber == null || phoneNumber.isEmpty()) {
             phoneNumber = "";
         }
 
-        // Pass original number and country - validator will handle formatting for parsing
-        return new PhoneRecord(rowNumber, id, email, name, phoneNumber, country, platform, originalLine);
+        List<String> originalColumnValues = null;
+        if (originalColumnNames != null && !originalColumnNames.isEmpty()) {
+            originalColumnValues = getRowValues(row, originalColumnNames.size());
+        }
+        return new PhoneRecord(rowNumber, id, email, name, phoneNumber, country, platform, originalLine, originalColumnValues);
+    }
+
+    /** Get cell values for this row in order, same length as originalColumnNames. */
+    private List<String> getRowValues(Row row, int columnCount) {
+        List<String> values = new ArrayList<>();
+        for (int i = 0; i < columnCount; i++) {
+            Cell cell = row.getCell(i);
+            String v = cell != null ? getCellValueAsString(cell) : null;
+            values.add(v != null ? v : "");
+        }
+        return values;
     }
 
     /**

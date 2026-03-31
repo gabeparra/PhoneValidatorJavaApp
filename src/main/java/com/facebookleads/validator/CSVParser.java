@@ -3,6 +3,7 @@ package com.facebookleads.validator;
 import java.io.*;
 import java.nio.file.*;
 import java.util.*;
+import java.util.stream.Collectors;
 
 /**
  * Parses phone numbers from CSV files (Excel exports, etc.)
@@ -27,12 +28,18 @@ public class CSVParser implements DataParser {
             return new PhoneNumberData(records);
         }
         
-        // Parse header row to find column indices
-        Map<String, Integer> columnIndex = parseHeader(csvRecords.get(0));
-        
+        // Parse header row: full column names (for export) and column indices (for mapping)
+        String headerLine = csvRecords.get(0);
+        String[] headerArray = parseCSVLine(headerLine);
+        List<String> originalColumnNames = Arrays.stream(headerArray)
+                .map(h -> h != null ? h.trim() : "")
+                .collect(Collectors.toList());
+
+        Map<String, Integer> columnIndex = parseHeader(headerLine);
+
         if (columnIndex.isEmpty()) {
             System.err.println("⚠️  Warning: Could not detect required columns in CSV header");
-            return new PhoneNumberData(records);
+            return new PhoneNumberData(records, originalColumnNames);
         }
         
         // Log detected columns for debugging
@@ -60,7 +67,7 @@ public class CSVParser implements DataParser {
             
             try {
                 rowNumber++;
-                PhoneRecord phoneRecord = parseCSVRow(rowNumber, record, columnIndex);
+                PhoneRecord phoneRecord = parseCSVRow(rowNumber, record, columnIndex, headerArray.length);
                 if (phoneRecord != null) {
                     records.add(phoneRecord);
                 }
@@ -70,7 +77,7 @@ public class CSVParser implements DataParser {
         }
         
         System.out.println("✅ Parsed " + records.size() + " phone records from CSV file");
-        return new PhoneNumberData(records);
+        return new PhoneNumberData(records, originalColumnNames);
     }
     
     /**
@@ -217,9 +224,13 @@ public class CSVParser implements DataParser {
     /**
      * Parse a single CSV row into a PhoneRecord
      */
-    private PhoneRecord parseCSVRow(int rowNumber, String record, Map<String, Integer> columnIndex) {
+    private PhoneRecord parseCSVRow(int rowNumber, String record, Map<String, Integer> columnIndex, int expectedColumns) {
         String[] values = parseCSVLine(record);
-        
+        List<String> originalColumnValues = new ArrayList<>();
+        for (int i = 0; i < expectedColumns; i++) {
+            originalColumnValues.add(i < values.length ? (values[i] != null ? values[i].trim() : "") : "");
+        }
+
         String id = getValueAt(values, columnIndex.get("id"));
         String email = getValueAt(values, columnIndex.get("email"));
         
@@ -243,12 +254,11 @@ public class CSVParser implements DataParser {
         String platform = getValueAt(values, columnIndex.get("platform"));
         
         // Always create a record, even if phone number is missing - validator will mark it as invalid
-        // Use empty string instead of null for missing phone numbers to ensure it's processed
         if (phoneNumber == null || phoneNumber.isEmpty()) {
             phoneNumber = "";
         }
         
-        return new PhoneRecord(rowNumber, id, email, name, phoneNumber, country, platform, record);
+        return new PhoneRecord(rowNumber, id, email, name, phoneNumber, country, platform, record, originalColumnValues);
     }
     
     /**
